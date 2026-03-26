@@ -4,6 +4,7 @@ import dev.livin.instaloader.model.InstaGrapQlResponse
 import dev.livin.instaloader.model.InstaPost
 import dev.livin.instaloader.network.createHttpClient
 import dev.livin.instaloader.utils.getInstagramShortCode
+import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -61,5 +62,18 @@ class InstaRepository {
             video = media.video
         )
 
+    }
+
+    suspend fun downloadFile(url: String): ByteArray {
+        val response = client.get(url) {
+            // Optional: you can add headers if some CDNs require them
+            header("User-Agent", "Mozilla/5.0")
+        }
+
+        if (response.status.value in 200..299) {
+            return response.body<ByteArray>()
+        } else {
+            throw Exception("Failed to download file: ${response.status}")
+        }
     }
 }
