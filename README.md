@@ -64,6 +64,9 @@ The library uses a specific `doc_id` to query Instagram's GraphQL endpoint. It m
 
 <img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/img.png" width="300">
 
+<img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/ios.png" width="300">
+
+<img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/desktop.png" width="300">
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details (if available).
