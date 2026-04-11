@@ -35,20 +35,23 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 @Preview
-fun App() {
+fun App(postUrl: String? = "") {
     MaterialTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            InstaLoaderScreen()
+            InstaLoaderScreen(postUrl)
         }
     }
 }
 
 @Composable
-fun InstaLoaderScreen(viewModel: InstaViewModel = viewModel { InstaViewModel() }) {
-    var shortcode by remember { mutableStateOf("") }
+fun InstaLoaderScreen(
+    postUrl: String?,
+    viewModel: InstaViewModel = viewModel { InstaViewModel() }
+) {
+    var shortcode by remember { mutableStateOf(postUrl ?: "") }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val getFileByUrl by viewModel.getFileByUrl.collectAsStateWithLifecycle()
 
@@ -175,6 +178,7 @@ fun PostDetails(
 
                 currentImageIndex = page
 
+
                 AsyncImage(
                     model = post.images[page],
                     contentDescription = null,
@@ -217,6 +221,7 @@ fun PostDetails(
                 } else {
                     IconButton(
                         onClick = {
+                            println("Current Image Index: $currentImageIndex")
                             downloadImage(post.images[currentImageIndex])
                         },
                         modifier = Modifier
