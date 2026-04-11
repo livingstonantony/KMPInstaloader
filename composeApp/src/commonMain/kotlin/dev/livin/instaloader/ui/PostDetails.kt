@@ -63,8 +63,8 @@ fun PostDetails(
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(400.dp),
-                    contentScale = ContentScale.Crop
+                        .height(450.dp),
+                    contentScale = ContentScale.Fit
                 )
             }
 
@@ -84,7 +84,7 @@ fun PostDetails(
                     .padding(12.dp)
             ) {
                 Text(
-                    text = "(${pagerState.currentPage}/${pagerState.pageCount}) ${post.caption}",
+                    text = "(${pagerState.currentPage+1}/${pagerState.pageCount}) ${post.caption}",
                     color = Color.White,
                     fontSize = 14.sp,
                     maxLines = 3
