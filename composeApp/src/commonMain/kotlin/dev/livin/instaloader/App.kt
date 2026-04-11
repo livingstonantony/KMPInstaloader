@@ -163,8 +163,6 @@ fun PostDetails(
 ) {
 
     val pagerState = rememberPagerState(pageCount = { post.images.size })
-    var currentImageIndex by remember { mutableIntStateOf(0) }
-
 
     Column(modifier = Modifier.fillMaxWidth()) {
 
@@ -175,9 +173,6 @@ fun PostDetails(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth()
             ) { page ->
-
-                currentImageIndex = page
-
 
                 AsyncImage(
                     model = post.images[page],
@@ -219,10 +214,23 @@ fun PostDetails(
                         color = Color.White
                     )
                 } else {
+
+/*                    Text(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(6.dp)
+                            .background(
+                                Color.Black.copy(alpha = 0.5f),
+                                shape = CircleShape
+                            )
+                            .padding(end = 30.dp)
+                        ,
+                        text = "(${pagerState.currentPage})",
+                        color = Color.White
+                    )*/
                     IconButton(
                         onClick = {
-                            println("Current Image Index: $currentImageIndex")
-                            downloadImage(post.images[currentImageIndex])
+                            downloadImage(post.images[pagerState.currentPage])
                         },
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
