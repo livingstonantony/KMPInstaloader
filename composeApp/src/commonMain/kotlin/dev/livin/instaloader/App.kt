@@ -1,13 +1,20 @@
 package dev.livin.instaloader
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -40,7 +47,6 @@ fun InstaLoaderScreen(viewModel: InstaViewModel = viewModel { InstaViewModel() }
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
             .safeContentPadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -74,12 +80,15 @@ fun InstaLoaderScreen(viewModel: InstaViewModel = viewModel { InstaViewModel() }
             is InstaUiState.Idle -> {
                 Text("Enter a shortcode to see post details")
             }
+
             is InstaUiState.Loading -> {
                 CircularProgressIndicator()
             }
+
             is InstaUiState.Success -> {
                 PostDetails(state.post)
             }
+
             is InstaUiState.Error -> {
                 Text(
                     text = state.message,
@@ -90,36 +99,74 @@ fun InstaLoaderScreen(viewModel: InstaViewModel = viewModel { InstaViewModel() }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PostDetails(post: dev.livin.instaloader.model.InstaPost) {
+
+    val pagerState = rememberPagerState(pageCount = { post.images.size })
+
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "Caption:",
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-        Text(
-            text = post.caption,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
 
-        Text(
-            text = "Images: (${post.images.size})",
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        Box {
 
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(post.images) { imageUrl ->
+            // 🔹 Horizontal swipe images
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxWidth()
+            ) { page ->
+
                 AsyncImage(
-                    model = imageUrl,
+                    model = post.images[page],
                     contentDescription = null,
                     modifier = Modifier
-                        .fillMaxWidth(),
-                    contentScale = ContentScale.Inside
+                        .fillMaxWidth()
+                        .height(400.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            // 🔹 Caption overlay (bottom gradient)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.7f)
+                            )
+                        )
+                    )
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = post.caption,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    maxLines = 3
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 🔹 Dot indicator
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            repeat(post.images.size) { index ->
+                val isSelected = pagerState.currentPage == index
+
+                Box(
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .size(if (isSelected) 8.dp else 6.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isSelected) Color.Blue else Color.Gray
+                        )
                 )
             }
         }
