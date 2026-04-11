@@ -1,5 +1,7 @@
 # KMPInstaloader
 
+[Discord Server-KMPInstaloader](https://discord.gg/j5N45pXa)
+
 A Kotlin Multiplatform (KMP) library for downloading media content from public Instagram posts. 
 
 Inspired by the Python [instaloader](https://github.com/instaloader/instaloader) library, this project aims to provide a similar capability for the Kotlin ecosystem, supporting Android, iOS, Desktop, Web, and Server.
@@ -65,6 +67,33 @@ The library uses a specific `doc_id` to query Instagram's GraphQL endpoint. It m
 <img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/img.png" width="300"> <img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/ios.png" width="300">
 
 <img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/desktop.png" width="600">
+
+### Note ℹ️
+
+🙌 Looking for contributors!
+
+If you're interested in:
+
+- Kotlin Multiplatform (KMP)
+- Networking / APIs
+- Reverse engineering / scraping
+- Open source collaboration
+- You’re very welcome to contribute!
+
+🛠️ Ways to help:
+
+- Improve existing features
+- Add new functionality
+- Fix bugs
+- Improve documentation
+- Suggest ideas
+Even small contributions are appreciated 💙
+
+Let’s build something useful for the Kotlin community together!
+
+Feel free to ⭐ the repo if you find it interesting!
+
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details (if available).
