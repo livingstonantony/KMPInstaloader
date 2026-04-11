@@ -23,8 +23,15 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import dev.livin.instaloader.utils.getCurrentDateTimeString
+import dev.livin.instaloader.utils.saveImageToFile
 import dev.livin.instaloader.viewmodel.InstaUiState
 import dev.livin.instaloader.viewmodel.InstaViewModel
+import dev.livin.instaloader.viewmodel.formatSize
+import kmpinstaloader.composeapp.generated.resources.Res
+import kmpinstaloader.composeapp.generated.resources.cloud_done
+import kmpinstaloader.composeapp.generated.resources.download
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 @Preview
@@ -43,6 +50,7 @@ fun App() {
 fun InstaLoaderScreen(viewModel: InstaViewModel = viewModel { InstaViewModel() }) {
     var shortcode by remember { mutableStateOf("") }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val getFileByUrl by viewModel.getFileByUrl.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -86,7 +94,9 @@ fun InstaLoaderScreen(viewModel: InstaViewModel = viewModel { InstaViewModel() }
             }
 
             is InstaUiState.Success -> {
-                PostDetails(state.post)
+                PostDetails(state.post, isDownloading = getFileByUrl is InstaUiState.Loading) {
+                    viewModel.getFileByUrl(it)
+                }
             }
 
             is InstaUiState.Error -> {
@@ -96,14 +106,62 @@ fun InstaLoaderScreen(viewModel: InstaViewModel = viewModel { InstaViewModel() }
                 )
             }
         }
+
+
+
+        when (val state = getFileByUrl) {
+            is InstaUiState.Idle -> {
+//                Text("Enter a shortcode to see post details")
+            }
+
+            is InstaUiState.Loading -> {
+                Text(
+                    "Downloading...",
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
+
+            is InstaUiState.Success -> {
+                val imageBytes = state.post
+                if (imageBytes != null) {
+                    println("Download Image Size: ${imageBytes.formatSize()}")
+                    val fileName = getCurrentDateTimeString()
+                    val path = saveImageToFile(imageBytes, fileName)
+
+                    Text(
+                        "Saved successfully at /Pictures/Instaloader",
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                } else {
+                    Text(
+                        "No image found",
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                }
+            }
+
+            is InstaUiState.Error -> {
+                Text(
+                    text = state.message,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
+        }
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PostDetails(post: dev.livin.instaloader.model.InstaPost) {
+fun PostDetails(
+    post: dev.livin.instaloader.model.InstaPost,
+    isDownloading: Boolean = false,
+    downloadImage: (String) -> Unit
+) {
 
     val pagerState = rememberPagerState(pageCount = { post.images.size })
+    var currentImageIndex by remember { mutableIntStateOf(0) }
+
 
     Column(modifier = Modifier.fillMaxWidth()) {
 
@@ -114,6 +172,8 @@ fun PostDetails(post: dev.livin.instaloader.model.InstaPost) {
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth()
             ) { page ->
+
+                currentImageIndex = page
 
                 AsyncImage(
                     model = post.images[page],
@@ -146,6 +206,36 @@ fun PostDetails(post: dev.livin.instaloader.model.InstaPost) {
                     fontSize = 14.sp,
                     maxLines = 3
                 )
+
+                if (isDownloading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(6.dp),
+                        color = Color.White
+                    )
+                } else {
+                    IconButton(
+                        onClick = {
+                            downloadImage(post.images[currentImageIndex])
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(6.dp)
+                            .background(
+                                Color.Black.copy(alpha = 0.5f),
+                                shape = CircleShape
+                            )
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.download),
+                            contentDescription = "Download",
+                            tint = Color.White
+                        )
+                    }
+                }
+
+
             }
         }
 

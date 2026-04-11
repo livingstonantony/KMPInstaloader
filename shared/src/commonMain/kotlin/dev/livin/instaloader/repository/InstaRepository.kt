@@ -76,4 +76,5 @@ class InstaRepository {
             throw Exception("Failed to download file: ${response.status}")
         }
     }
+
 }

@@ -13,3 +13,4 @@ fun String.getInstagramShortCode(): String? {
         else -> null
     }
 }
+
