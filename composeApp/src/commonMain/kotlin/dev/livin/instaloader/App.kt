@@ -1,37 +1,37 @@
 package dev.livin.instaloader
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
+import dev.livin.instaloader.ui.PostDetails
 import dev.livin.instaloader.utils.getCurrentDateTimeString
 import dev.livin.instaloader.utils.saveImageToFile
 import dev.livin.instaloader.viewmodel.InstaUiState
 import dev.livin.instaloader.viewmodel.InstaViewModel
 import dev.livin.instaloader.viewmodel.formatSize
-import kmpinstaloader.composeapp.generated.resources.Res
-import kmpinstaloader.composeapp.generated.resources.cloud_done
-import kmpinstaloader.composeapp.generated.resources.download
-import org.jetbrains.compose.resources.painterResource
 
 @Composable
 @Preview
@@ -54,6 +54,7 @@ fun InstaLoaderScreen(
     var shortcode by remember { mutableStateOf(postUrl ?: "") }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val getFileByUrl by viewModel.getFileByUrl.collectAsStateWithLifecycle()
+    val getFilesByUrl by viewModel.getFilesByUrl.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -97,7 +98,13 @@ fun InstaLoaderScreen(
             }
 
             is InstaUiState.Success -> {
-                PostDetails(state.post, isDownloading = getFileByUrl is InstaUiState.Loading) {
+                PostDetails(
+                    state.post,
+                    isDownloading = getFileByUrl is InstaUiState.Loading,
+                    isDownloadAllLoading = getFilesByUrl is InstaUiState.Loading,
+                    downloadAll = {
+                        viewModel.getFilesByUrl(it)
+                    }) {
                     viewModel.getFileByUrl(it)
                 }
             }
@@ -109,9 +116,6 @@ fun InstaLoaderScreen(
                 )
             }
         }
-
-
-
         when (val state = getFileByUrl) {
             is InstaUiState.Idle -> {
 //                Text("Enter a shortcode to see post details")
@@ -151,127 +155,62 @@ fun InstaLoaderScreen(
                 )
             }
         }
+        when (val state = getFilesByUrl) {
+
+            is InstaUiState.Idle -> {
+                // Do nothing
+            }
+
+            is InstaUiState.Loading -> {
+                Text(
+                    "Downloading all images...",
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
+
+            is InstaUiState.Success -> {
+                val files = state.post
+
+                if (files.isNotEmpty()) {
+
+                    val paths = saveImagesToFiles(files)
+
+                    Text(
+                        "Saved ${paths.size} files to /Pictures/Instaloader",
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+
+                } else {
+                    Text(
+                        "No files found",
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                }
+            }
+
+            is InstaUiState.Error -> {
+                Text(
+                    text = state.message,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
+        }
+
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun PostDetails(
-    post: dev.livin.instaloader.model.InstaPost,
-    isDownloading: Boolean = false,
-    downloadImage: (String) -> Unit
-) {
+fun saveImagesToFiles(files: List<ByteArray?>): List<String> {
+    val savedPaths = mutableListOf<String>()
+    val baseName = getCurrentDateTimeString() // SAME format, single call
 
-    val pagerState = rememberPagerState(pageCount = { post.images.size })
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-
-        Box {
-
-            // 🔹 Horizontal swipe images
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxWidth()
-            ) { page ->
-
-                AsyncImage(
-                    model = post.images[page],
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(400.dp),
-                    contentScale = ContentScale.Crop
-                )
-            }
-
-            // 🔹 Caption overlay (bottom gradient)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .fillMaxWidth()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.7f)
-                            )
-                        )
-                    )
-                    .padding(12.dp)
-            ) {
-                Text(
-                    text = post.caption,
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    maxLines = 3
-                )
-
-                if (isDownloading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(6.dp),
-                        color = Color.White
-                    )
-                } else {
-
-/*                    Text(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(6.dp)
-                            .background(
-                                Color.Black.copy(alpha = 0.5f),
-                                shape = CircleShape
-                            )
-                            .padding(end = 30.dp)
-                        ,
-                        text = "(${pagerState.currentPage})",
-                        color = Color.White
-                    )*/
-                    IconButton(
-                        onClick = {
-                            downloadImage(post.images[pagerState.currentPage])
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(6.dp)
-                            .background(
-                                Color.Black.copy(alpha = 0.5f),
-                                shape = CircleShape
-                            )
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.download),
-                            contentDescription = "Download",
-                            tint = Color.White
-                        )
-                    }
-                }
-
-
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // 🔹 Dot indicator
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            repeat(post.images.size) { index ->
-                val isSelected = pagerState.currentPage == index
-
-                Box(
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .size(if (isSelected) 8.dp else 6.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isSelected) Color.Blue else Color.Gray
-                        )
-                )
-            }
+    files.forEachIndexed { index, bytes ->
+        if (bytes != null) {
+            val fileName = "${baseName}_${index+1}"
+            val path = saveImageToFile(bytes, fileName)
+            savedPaths.add(path)
         }
     }
+
+    return savedPaths
 }

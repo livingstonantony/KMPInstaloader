@@ -9,6 +9,9 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 
 class InstaRepository {
@@ -75,6 +78,18 @@ class InstaRepository {
         } else {
             throw Exception("Failed to download file: ${response.status}")
         }
+    }
+
+    suspend fun downloadFiles(urls: List<String>): List<ByteArray?> = coroutineScope {
+        urls.map { url ->
+            async {
+                try {
+                    downloadFile(url)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        }.awaitAll()
     }
 
 }

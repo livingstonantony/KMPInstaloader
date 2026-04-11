@@ -31,8 +31,8 @@ class InstaViewModel : ViewModel() {
     private val _getFileByUrl = MutableStateFlow<InstaUiState<ByteArray?>>(InstaUiState.Idle)
     val getFileByUrl: StateFlow<InstaUiState<ByteArray?>> = _getFileByUrl.asStateFlow()
 
-    private val _getFilesByUrl = MutableStateFlow<InstaUiState<List<ByteArray>?>>(InstaUiState.Idle)
-    val getFilesByUrl: StateFlow<InstaUiState<List<ByteArray>?>> = _getFilesByUrl.asStateFlow()
+    private val _getFilesByUrl = MutableStateFlow<InstaUiState<List<ByteArray?>>>(InstaUiState.Idle)
+    val getFilesByUrl: StateFlow<InstaUiState<List<ByteArray?>>> = _getFilesByUrl.asStateFlow()
 
 
     fun fetchPost(shortcode: String) {
@@ -67,6 +67,20 @@ class InstaViewModel : ViewModel() {
         }
     }
 
+    fun getFilesByUrl(urls: List<String>) {
+        viewModelScope.launch {
+            _getFilesByUrl.value = InstaUiState.Loading
+            try {
+                val files = repository.downloadFiles(urls)
+                _getFilesByUrl.value = InstaUiState.Success(files)
+            } catch (e: Exception) {
+                println("Error fetching file: ${e.message}")
+            }
+
+        }
+
+    }
+
 
 }
 
@@ -79,10 +93,12 @@ fun ByteArray.formatSize(): String {
             val mb = bytes / (1024.0 * 1024.0)
             "%.2f MB".format(mb)
         }
+
         bytes >= 1024 -> {
             val kb = bytes / 1024.0
             "%.2f KB".format(kb)
         }
+
         else -> "$bytes Bytes"
     }
 }
