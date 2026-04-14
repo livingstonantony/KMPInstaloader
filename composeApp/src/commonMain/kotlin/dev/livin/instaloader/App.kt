@@ -14,6 +14,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,8 +54,31 @@ fun InstaLoaderScreen(
 ) {
     var shortcode by remember { mutableStateOf(postUrl ?: "") }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val getFileByUrl by viewModel.getFileByUrl.collectAsStateWithLifecycle()
-    val getFilesByUrl by viewModel.getFilesByUrl.collectAsStateWithLifecycle()
+    val fileState by viewModel.getFileByUrl.collectAsStateWithLifecycle()
+    val filesState by viewModel.getFilesByUrl.collectAsStateWithLifecycle()
+
+
+    // 🔥 Handle single image save (SIDE EFFECT)
+    LaunchedEffect(fileState) {
+        if (fileState is InstaUiState.Success) {
+            val bytes = (fileState as InstaUiState.Success<ByteArray?>).post
+            bytes?.let {
+                val fileName = getCurrentDateTimeString()
+                saveImageToFile(it, fileName)
+            }
+        }
+    }
+
+    // 🔥 Handle multiple images save (SIDE EFFECT)
+    LaunchedEffect(filesState) {
+        if (filesState is InstaUiState.Success) {
+            val files = (filesState as InstaUiState.Success<List<ByteArray?>>).post
+            if (files.isNotEmpty()) {
+                saveImagesToFiles(files)
+            }
+        }
+    }
+
 
     Column(
         modifier = Modifier
@@ -100,8 +124,8 @@ fun InstaLoaderScreen(
             is InstaUiState.Success -> {
                 PostDetails(
                     state.post,
-                    isDownloading = getFileByUrl is InstaUiState.Loading,
-                    isDownloadAllLoading = getFilesByUrl is InstaUiState.Loading,
+                    isDownloading = fileState is InstaUiState.Loading,
+                    isDownloadAllLoading = filesState is InstaUiState.Loading,
                     downloadAll = {
                         viewModel.getFilesByUrl(it)
                     }) {
@@ -116,7 +140,7 @@ fun InstaLoaderScreen(
                 )
             }
         }
-        when (val state = getFileByUrl) {
+        when (val state = fileState) {
             is InstaUiState.Idle -> {
 //                Text("Enter a shortcode to see post details")
             }
@@ -132,8 +156,6 @@ fun InstaLoaderScreen(
                 val imageBytes = state.post
                 if (imageBytes != null) {
                     println("Download Image Size: ${imageBytes.formatSize()}")
-                    val fileName = getCurrentDateTimeString()
-                    val path = saveImageToFile(imageBytes, fileName)
 
                     Text(
                         "Saved successfully at /Pictures/Instaloader",
@@ -155,7 +177,7 @@ fun InstaLoaderScreen(
                 )
             }
         }
-        when (val state = getFilesByUrl) {
+        when (val state = filesState) {
 
             is InstaUiState.Idle -> {
                 // Do nothing
@@ -173,10 +195,8 @@ fun InstaLoaderScreen(
 
                 if (files.isNotEmpty()) {
 
-                    val paths = saveImagesToFiles(files)
-
                     Text(
-                        "Saved ${paths.size} files to /Pictures/Instaloader",
+                        "Saved ${files.size} files to /Pictures/Instaloader",
                         modifier = Modifier.padding(top = 16.dp)
                     )
 
