@@ -83,6 +83,12 @@ fun InstaLoaderScreen(
             }
         }
     }
+    LaunchedEffect(postUrl){
+        // When user comes from shared link, user no need to click on download tail icon to fetch the post
+        postUrl?.let {  url->
+            viewModel.fetchPost(url)
+        }
+    }
 
     // 🔥 Handle multiple images save (SIDE EFFECT)
     LaunchedEffect(filesState) {
