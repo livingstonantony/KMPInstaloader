@@ -7,4 +7,9 @@ expect fun saveImageToFile(
     fileName: String
 ): String
 
+expect fun saveVideoToFile(
+    bytes: ByteArray,
+    fileName: String
+): String
+
 expect fun getCurrentDateTimeString(): String

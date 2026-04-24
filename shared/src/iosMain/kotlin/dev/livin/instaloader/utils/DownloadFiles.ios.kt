@@ -24,6 +24,23 @@ actual fun saveImageToFile(
     return path
 }
 
+actual fun saveVideoToFile(
+    bytes: ByteArray,
+    fileName: String
+): String {
+    val data = bytes.toNSData()
+
+    val dir = NSSearchPathForDirectoriesInDomains(
+        NSDocumentDirectory,
+        NSUserDomainMask,
+        true
+    ).first() as String
+
+    val path = "$dir/$fileName.mp4"
+    NSFileManager.defaultManager.createFileAtPath(path, data, null)
+
+    return path
+}
 
 actual fun getCurrentDateTimeString(): String {
     val formatter = NSDateFormatter()

@@ -21,6 +21,11 @@ sealed class InstaUiState<out T> {
     data class Error(val message: String) : InstaUiState<Nothing>()
 }
 
+sealed class FileType {
+    object Image : FileType()
+    object Video : FileType()
+}
+
 class InstaViewModel : ViewModel() {
 
     private val repository = InstaRepository()
@@ -28,8 +33,10 @@ class InstaViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<InstaUiState<InstaPost>>(InstaUiState.Idle)
     val uiState: StateFlow<InstaUiState<InstaPost>> = _uiState.asStateFlow()
 
-    private val _getFileByUrl = MutableStateFlow<InstaUiState<ByteArray?>>(InstaUiState.Idle)
-    val getFileByUrl: StateFlow<InstaUiState<ByteArray?>> = _getFileByUrl.asStateFlow()
+    private val _getFileByUrl =
+        MutableStateFlow<InstaUiState<Pair<ByteArray?, FileType>>>(InstaUiState.Idle)
+    val getFileByUrl: StateFlow<InstaUiState<Pair<ByteArray?, FileType>>> =
+        _getFileByUrl.asStateFlow()
 
     private val _getFilesByUrl = MutableStateFlow<InstaUiState<List<ByteArray?>>>(InstaUiState.Idle)
     val getFilesByUrl: StateFlow<InstaUiState<List<ByteArray?>>> = _getFilesByUrl.asStateFlow()
@@ -42,6 +49,8 @@ class InstaViewModel : ViewModel() {
         }
         viewModelScope.launch {
             _uiState.value = InstaUiState.Loading
+            _getFileByUrl.value = InstaUiState.Idle
+            _getFilesByUrl.value = InstaUiState.Idle
 
             try {
                 val post = repository.getPost(shortcode.trim())
@@ -54,12 +63,12 @@ class InstaViewModel : ViewModel() {
         }
     }
 
-    fun getFileByUrl(url: String) {
+    fun getFileByUrl(url: String, type: FileType) {
         viewModelScope.launch {
             _getFileByUrl.value = InstaUiState.Loading
             try {
                 val file = repository.downloadFile(url)
-                _getFileByUrl.value = InstaUiState.Success(file)
+                _getFileByUrl.value = InstaUiState.Success(Pair(file, type))
             } catch (e: Exception) {
                 println("Error fetching file: ${e.message}")
             }
