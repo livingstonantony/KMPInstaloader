@@ -5,11 +5,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,6 +29,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -106,11 +110,40 @@ fun InstaLoaderScreen(
         }
     }
 
+    // Apply safe drawing insets as content padding
+    // Helps avoid edge-to-edge UI issues like overlapping
+    // with status bar, navigation bar, notch, or gesture areas
+    // Especially to avoid UI issue in the desktop app
+    val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
+
+    val topInset = with(density) {
+        WindowInsets.safeDrawing.getTop(this).toDp()
+    }
+
+    val bottomInset = with(density) {
+        WindowInsets.safeDrawing.getBottom(this).toDp()
+    }
+
+    val startInset = with(density) {
+        WindowInsets.safeDrawing.getLeft(this, layoutDirection).toDp()
+    }
+
+    val endInset = with(density) {
+        WindowInsets.safeDrawing.getRight(this, layoutDirection).toDp()
+    }
+
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .safeContentPadding(),
+            .padding(
+                top = topInset,
+                bottom = bottomInset,
+                start = startInset,
+                end = endInset
+            )
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
