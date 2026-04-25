@@ -92,22 +92,3 @@ class InstaViewModel : ViewModel() {
 
 
 }
-
-
-fun ByteArray.formatSize(): String {
-    val bytes = this.size
-
-    return when {
-        bytes >= 1024 * 1024 -> {
-            val mb = bytes / (1024.0 * 1024.0)
-            "%.2f MB".format(mb)
-        }
-
-        bytes >= 1024 -> {
-            val kb = bytes / 1024.0
-            "%.2f KB".format(kb)
-        }
-
-        else -> "$bytes Bytes"
-    }
-}

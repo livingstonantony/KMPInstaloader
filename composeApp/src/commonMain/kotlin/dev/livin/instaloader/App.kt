@@ -38,13 +38,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.livin.instaloader.ui.PostDetails
+import dev.livin.instaloader.utils.formatSize
 import dev.livin.instaloader.utils.getCurrentDateTimeString
 import dev.livin.instaloader.utils.saveImageToFile
+import dev.livin.instaloader.utils.saveImagesToFiles
 import dev.livin.instaloader.utils.saveVideoToFile
 import dev.livin.instaloader.viewmodel.FileType
 import dev.livin.instaloader.viewmodel.InstaUiState
 import dev.livin.instaloader.viewmodel.InstaViewModel
-import dev.livin.instaloader.viewmodel.formatSize
 import kmpinstaloader.composeapp.generated.resources.Res
 import kmpinstaloader.composeapp.generated.resources.download_2
 import org.jetbrains.compose.resources.painterResource
@@ -294,19 +295,4 @@ fun InstaLoaderScreen(
         }
 
     }
-}
-
-fun saveImagesToFiles(files: List<ByteArray?>): List<String> {
-    val savedPaths = mutableListOf<String>()
-    val baseName = getCurrentDateTimeString() // SAME format, single call
-
-    files.forEachIndexed { index, bytes ->
-        if (bytes != null) {
-            val fileName = "${baseName}_${index + 1}"
-            val path = saveImageToFile(bytes, fileName)
-            savedPaths.add(path)
-        }
-    }
-
-    return savedPaths
 }

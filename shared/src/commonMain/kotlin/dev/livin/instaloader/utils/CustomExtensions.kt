@@ -1,5 +1,6 @@
 package dev.livin.instaloader.utils
 
+import kotlin.math.roundToInt
 
 fun String.getInstagramShortCode(): String? {
 
@@ -14,3 +15,31 @@ fun String.getInstagramShortCode(): String? {
     }
 }
 
+
+/**
+ * Formats ByteArray size as readable text.
+ *
+ * Examples:
+ * 120 Bytes
+ * 25.43 KB
+ * 3.78 MB
+ *
+ * Works in KMP (Android / iOS / Desktop)
+ */
+fun ByteArray.formatSize(): String {
+    val bytes = this.size.toDouble()
+
+    return when {
+        bytes >= 1024 * 1024 -> {
+            val mb = bytes / (1024.0 * 1024.0)
+            "${((mb * 100).roundToInt() / 100.0)} MB"
+        }
+
+        bytes >= 1024 -> {
+            val kb = bytes / 1024.0
+            "${((kb * 100).roundToInt() / 100.0)} KB"
+        }
+
+        else -> "${bytes.toInt()} Bytes"
+    }
+}
