@@ -170,7 +170,7 @@ fun PostDetails(
                     Icon(
                         painter = painterResource(Res.drawable.ic_video),
                         contentDescription = "Download",
-                        tint = Color.White
+                        tint = Color.LightGray
                     )
                 }
             }
