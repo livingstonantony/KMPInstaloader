@@ -1,6 +1,6 @@
 # KMPInstaloader
 
-[![Discord](https://img.shields.io/badge/Discord-KMPInstaloader-5865F2?logo=discord&logoColor=white)](https://discord.gg/j5N45pXa) [![Android APK](https://img.shields.io/badge/Download-Android%20APK-3DDC84?logo=android&logoColor=white)](https://github.com/livingstonantony/KMPInstaloader/tree/master/doc/Android_KMP_Instaloader.apk)
+[![Discord](https://img.shields.io/badge/Discord-KMPInstaloader-5865F2?logo=discord&logoColor=white)](https://discord.gg/egVMuyHD7) [![Android APK](https://img.shields.io/badge/Download-Android%20APK-3DDC84?logo=android&logoColor=white)](https://github.com/livingstonantony/KMPInstaloader/tree/master/doc/Android_KMP_Instaloader.apk)
 
 A Kotlin Multiplatform (KMP) library for downloading media content from public Instagram posts. 
 
