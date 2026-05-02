@@ -80,7 +80,8 @@ If you're interested in:
 - Networking / APIs
 - Reverse engineering / scraping
 - Open source collaboration
-- You’re very welcome to contribute!
+
+You’re very welcome to contribute!
 
 🛠️ Ways to help:
 
@@ -95,7 +96,7 @@ Let’s build something useful for the Kotlin community together!
 
 Feel free to ⭐ the repo if you find it interesting!
 
-
+**⚠️ Disclaimer:** This project is solely for educational purposes and to showcase Kotlin Multiplatform capabilities. The author is not responsible for any misuse of this tool. By using this software, you agree that you are doing so at your own risk and are responsible for complying with Instagram's Terms of Service and any applicable laws.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details (if available).
