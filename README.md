@@ -8,7 +8,7 @@ A Kotlin Multiplatform (KMP) library for downloading media content from public I
 
 Inspired by the Python [instaloader](https://github.com/instaloader/instaloader) library, this project aims to provide a similar capability for the Kotlin ecosystem, supporting Android, iOS, Desktop, Web, and Server.
 
-> **Note:** This project is in its very initial stages.
+> **Note:** This project is in its very initial stages. Currently, it supports downloading only public posts; access to private posts is under development.
 
 ## Features
 
