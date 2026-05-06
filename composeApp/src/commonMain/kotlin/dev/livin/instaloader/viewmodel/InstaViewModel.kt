@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.livin.instaloader.model.InstaPost
 import dev.livin.instaloader.repository.InstaRepository
+import dev.livin.instaloader.utils.isValidInstagramUrl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,6 +27,13 @@ sealed class FileType {
     object Video : FileType()
 }
 
+
+
+data class DownloadedFile(
+    val data: ByteArray?,
+    val type: FileType
+)
+
 class InstaViewModel : ViewModel() {
 
     private val repository = InstaRepository()
@@ -33,13 +41,19 @@ class InstaViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<InstaUiState<InstaPost>>(InstaUiState.Idle)
     val uiState: StateFlow<InstaUiState<InstaPost>> = _uiState.asStateFlow()
 
+
+
     private val _getFileByUrl =
-        MutableStateFlow<InstaUiState<Pair<ByteArray?, FileType>>>(InstaUiState.Idle)
-    val getFileByUrl: StateFlow<InstaUiState<Pair<ByteArray?, FileType>>> =
+        MutableStateFlow<InstaUiState<DownloadedFile>>(InstaUiState.Idle)
+
+    val getFileByUrl: StateFlow<InstaUiState<DownloadedFile>> =
         _getFileByUrl.asStateFlow()
 
-    private val _getFilesByUrl = MutableStateFlow<InstaUiState<List<ByteArray?>>>(InstaUiState.Idle)
-    val getFilesByUrl: StateFlow<InstaUiState<List<ByteArray?>>> = _getFilesByUrl.asStateFlow()
+    private val _getFilesByUrl =
+        MutableStateFlow<InstaUiState<List<DownloadedFile>>>(InstaUiState.Idle)
+
+    val getFilesByUrl: StateFlow<InstaUiState<List<DownloadedFile>>> =
+        _getFilesByUrl.asStateFlow()
 
 
     fun fetchPost(shortcode: String) {
@@ -47,6 +61,13 @@ class InstaViewModel : ViewModel() {
             _uiState.value = InstaUiState.Error("Shortcode cannot be empty")
             return
         }
+
+        //validating if its Instagram URL or not
+        if (!isValidInstagramUrl(shortcode)){
+            _uiState.value = InstaUiState.Error("Please use a valid Instagram URL")
+            return
+        }
+
         viewModelScope.launch {
             _uiState.value = InstaUiState.Loading
             _getFileByUrl.value = InstaUiState.Idle
@@ -63,12 +84,15 @@ class InstaViewModel : ViewModel() {
         }
     }
 
+
     fun getFileByUrl(url: String, type: FileType) {
         viewModelScope.launch {
             _getFileByUrl.value = InstaUiState.Loading
             try {
                 val file = repository.downloadFile(url)
-                _getFileByUrl.value = InstaUiState.Success(Pair(file, type))
+                _getFileByUrl.value = InstaUiState.Success(
+                    DownloadedFile(file, type)
+                )
             } catch (e: Exception) {
                 println("Error fetching file: ${e.message}")
             }
@@ -76,18 +100,35 @@ class InstaViewModel : ViewModel() {
         }
     }
 
+
+
     fun getFilesByUrl(urls: List<String>) {
         viewModelScope.launch {
             _getFilesByUrl.value = InstaUiState.Loading
             try {
                 val files = repository.downloadFiles(urls)
-                _getFilesByUrl.value = InstaUiState.Success(files)
+
+                val result = urls.mapIndexed { index, url ->
+                    val file = files.getOrNull(index)
+
+                    val type = when {
+                        url.contains(".mp4", ignoreCase = true) -> FileType.Video
+                        url.contains(".jpg", ignoreCase = true) ||
+                                url.contains(".jpeg", ignoreCase = true) ||
+                                url.contains(".png", ignoreCase = true) -> FileType.Image
+                        else -> FileType.Image
+                    }
+
+                    DownloadedFile(file, type)
+                }
+
+                _getFilesByUrl.value = InstaUiState.Success(result)
+
             } catch (e: Exception) {
-                println("Error fetching file: ${e.message}")
+                _getFilesByUrl.value =
+                    InstaUiState.Error(e.message ?: "Error fetching files")
             }
-
         }
-
     }
 
 
