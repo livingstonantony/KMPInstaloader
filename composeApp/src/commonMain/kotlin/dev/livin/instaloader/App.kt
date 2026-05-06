@@ -45,6 +45,7 @@ import dev.livin.instaloader.utils.getCurrentDateTimeString
 import dev.livin.instaloader.utils.saveImageToFile
 import dev.livin.instaloader.utils.saveImagesToFiles
 import dev.livin.instaloader.utils.saveVideoToFile
+import dev.livin.instaloader.viewmodel.DownloadedFile
 import dev.livin.instaloader.viewmodel.FileType
 import dev.livin.instaloader.viewmodel.InstaUiState
 import dev.livin.instaloader.viewmodel.InstaViewModel
@@ -78,24 +79,26 @@ fun InstaLoaderScreen(
 
     LaunchedEffect(fileState) {
         if (fileState is InstaUiState.Success) {
-            val bytes = (fileState as InstaUiState.Success<Pair<ByteArray?, FileType>>).post
-            bytes.let { (file, type) ->
-                val fileName = getCurrentDateTimeString()
 
-                if (file == null) return@let
+            val file = (fileState as InstaUiState.Success<DownloadedFile>).post
 
-                when (type) {
-                    is FileType.Image -> {
-                        saveImageToFile(file, fileName)
+            val fileName = getCurrentDateTimeString()
+
+            file.data?.let { bytes ->
+
+                when (file.type) {
+                    FileType.Image -> {
+                        saveImageToFile(bytes, fileName)
                     }
 
-                    is FileType.Video -> {
-                        saveVideoToFile(file, fileName)
+                    FileType.Video -> {
+                        saveVideoToFile(bytes, fileName)
                     }
                 }
             }
         }
     }
+
     LaunchedEffect(postUrl) {
         // When user comes from shared link, user no need to click on download tail icon to fetch the post
         postUrl?.let { url ->
@@ -233,19 +236,30 @@ fun InstaLoaderScreen(
             }
 
             is InstaUiState.Success -> {
-                val imageBytes = state.post.first
-                if (imageBytes != null) {
-                    println("Download Image Size: ${imageBytes.formatSize()}")
+                val file = state.post
 
-                    Text(
-                        "Saved successfully at /Pictures/Instaloader",
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
-                } else {
-                    Text(
-                        "No image found",
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
+                when (file.type) {
+                    FileType.Image -> {
+                        val imageBytes = file.data
+
+                        if (imageBytes != null) {
+                            println("Download Image Size: ${imageBytes.formatSize()}")
+
+                            Text(
+                                "Image saved successfully at /Pictures/Instaloader",
+                                modifier = Modifier.padding(top = 16.dp)
+                            )
+                        } else {
+                            Text("No image found")
+                        }
+                    }
+
+                    FileType.Video -> {
+                        Text(
+                            "Video saved successfully at /Pictures/Instaloader",
+                            modifier = Modifier.padding(top = 16.dp)
+                        )
+                    }
                 }
             }
 
