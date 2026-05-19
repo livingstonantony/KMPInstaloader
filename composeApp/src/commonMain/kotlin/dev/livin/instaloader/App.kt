@@ -2,6 +2,7 @@ package dev.livin.instaloader
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +23,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.livin.instaloader.home.HomeScreen
 import dev.livin.instaloader.ui.PostDetails
 import dev.livin.instaloader.utils.formatSize
 import dev.livin.instaloader.utils.getCurrentDateTimeString
@@ -55,13 +59,22 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 @Preview
-fun App(postUrl: String? = "") {
-    MaterialTheme {
+fun App(postUrl: String? = "",isDarkTheme: Boolean= isSystemInDarkTheme()) {
+
+    val colorScheme = if (isDarkTheme) {
+        darkColorScheme()
+    } else {
+        lightColorScheme()
+    }
+
+    // hi bro testing
+
+    MaterialTheme(colorScheme = colorScheme) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            InstaLoaderScreen(postUrl)
+            HomeScreen()
         }
     }
 }
