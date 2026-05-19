@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.tooling.preview.Preview
@@ -18,7 +19,7 @@ class MainActivity : ComponentActivity() {
 
         handleIntent(intent)
         setContent {
-            App(sharedTextState.value)
+            App(sharedTextState.value, isDarkTheme = isSystemInDarkTheme())
         }
     }
     override fun onNewIntent(intent: Intent) {
