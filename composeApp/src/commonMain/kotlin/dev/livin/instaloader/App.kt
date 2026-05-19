@@ -74,8 +74,8 @@ fun App(postUrl: String? = "",isDarkTheme: Boolean= isSystemInDarkTheme()) {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            //HomeScreen()
-            InstaLoaderScreen(postUrl)
+            HomeScreen(postUrl)
+            //InstaLoaderScreen(postUrl)
         }
     }
 }
