@@ -109,9 +109,9 @@ fun InstaLoaderScreen(
     // 🔥 Handle multiple images save (SIDE EFFECT)
     LaunchedEffect(filesState) {
         if (filesState is InstaUiState.Success) {
-            val files = (filesState as InstaUiState.Success<List<ByteArray?>>).post
+            val files = (filesState as InstaUiState.Success<List<DownloadedFile>>).post
             if (files.isNotEmpty()) {
-                saveImagesToFiles(files)
+                saveImagesToFiles(files.map { it.data })
             }
         }
     }
