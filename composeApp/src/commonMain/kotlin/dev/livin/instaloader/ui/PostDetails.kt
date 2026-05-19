@@ -74,10 +74,12 @@ fun PostDetails(
                     model = post.images[page],
                     contentDescription = null,
                     modifier = Modifier
+                        .padding(horizontal = 8.dp)
                         .fillMaxWidth()
                         .height(450.dp)
+                        .clip(MaterialTheme.shapes.large)
                         .background(Color.LightGray),
-                    contentScale = ContentScale.Fit
+                    contentScale = ContentScale.Crop
                 )
             }
 
@@ -86,6 +88,7 @@ fun PostDetails(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .fillMaxWidth()
+                    .clip(MaterialTheme.shapes.large)
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
@@ -178,7 +181,7 @@ fun PostDetails(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (fileType == FileType.Image){
+        if (fileType == FileType.Image) {
             // 🔹 Dot indicator
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -193,7 +196,7 @@ fun PostDetails(
                             .size(if (isSelected) 8.dp else 6.dp)
                             .clip(CircleShape)
                             .background(
-                                if (isSelected) Color.Blue else Color.Gray
+                                if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Gray
                             )
                     )
                 }
