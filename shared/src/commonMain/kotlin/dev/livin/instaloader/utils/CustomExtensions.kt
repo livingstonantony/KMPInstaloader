@@ -16,6 +16,13 @@ fun String.getInstagramShortCode(): String? {
 }
 
 
+ fun isValidInstagramUrl(url: String): Boolean {
+    val cleanUrl = url.trim().lowercase()
+
+    return cleanUrl.startsWith("https://www.instagram.com/") ||
+            cleanUrl.startsWith("https://instagram.com/")
+}
+
 /**
  * Formats ByteArray size as readable text.
  *
