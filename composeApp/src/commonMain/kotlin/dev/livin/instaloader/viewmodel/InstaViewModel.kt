@@ -29,10 +29,39 @@ sealed class FileType {
 
 
 
+/**
+ * Represents a downloaded file.
+ *
+ * ByteArray uses reference equality by default, which means two arrays with
+ * identical content are considered different if they are different instances.
+ *
+ * We override equals() and hashCode() to perform content-based comparison
+ * using ByteArray.contentEquals() and ByteArray.contentHashCode(), ensuring
+ * DownloadedFile instances are compared based on their actual file data and
+ * type rather than array references.
+ */
 data class DownloadedFile(
     val data: ByteArray?,
     val type: FileType
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as DownloadedFile
+
+        if (!data.contentEquals(other.data)) return false
+        if (type != other.type) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = data?.contentHashCode() ?: 0
+        result = 31 * result + type.hashCode()
+        return result
+    }
+}
 
 class InstaViewModel : ViewModel() {
 
