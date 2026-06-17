@@ -110,12 +110,16 @@ fun InstaLoaderScreen(
 
     // 🔥 Handle multiple images save (SIDE EFFECT)
     LaunchedEffect(filesState) {
-        if (filesState is InstaUiState.Success) {
-            val files = (filesState as InstaUiState.Success<List<DownloadedFile>>).post
-            if (files.isNotEmpty()) {
-                saveImagesToFiles(files.map { it.data })
+        when(val state = filesState){
+            is InstaUiState.Success -> {
+                val files: List<DownloadedFile> = state.post
+                if (files.isNotEmpty()) {
+                    saveImagesToFiles(files.map { it.data })
+                }
             }
+            else -> {}
         }
+
     }
 
     // Apply safe drawing insets as content padding
