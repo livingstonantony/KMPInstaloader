@@ -18,6 +18,7 @@ ktor = "3.4.1"
 logback = "1.5.32"
 material3 = "1.10.0-alpha05"
 coil = "3.4.0"
+kotlin-wrappers = "2026.7.7"
 kotlinxSerializationJson = "1.8.1"
 
 [libraries]
@@ -40,6 +41,9 @@ compose-components-resources = { module = "org.jetbrains.compose.components:comp
 compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+wrappers-browser = { module = "org.jetbrains.kotlin-wrappers:kotlin-browser", version.ref = "kotlin-wrappers" }
+
 
 ktor-serverCore = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
 ktor-serverNetty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
