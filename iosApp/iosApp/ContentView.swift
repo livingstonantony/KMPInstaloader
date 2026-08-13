@@ -3,8 +3,8 @@
 //  iosApp
 //
 
-import SwiftUI
 import Shared
+import SwiftUI
 
 struct ContentView: View {
 
@@ -61,8 +61,7 @@ struct ContentView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(
-                            viewModel.isLoading ||
-                            shortCode.isEmpty
+                            viewModel.isLoading || shortCode.isEmpty
                         )
                     }
                     .padding(.horizontal)
@@ -144,7 +143,8 @@ struct ContentView: View {
                                             .frame(height: 420)
                                             .background(
                                                 Color(
-                                                    uiColor: .secondarySystemBackground
+                                                    uiColor:
+                                                        .secondarySystemBackground
                                                 )
                                             )
 
@@ -227,16 +227,16 @@ struct ContentView: View {
                                     Circle()
                                         .fill(
                                             currentPage == index
-                                            ? Color.accentColor
-                                            : Color.secondary.opacity(0.3)
+                                                ? Color.accentColor
+                                                : Color.secondary.opacity(0.3)
                                         )
                                         .frame(
                                             width: currentPage == index
-                                            ? 10
-                                            : 8,
+                                                ? 10
+                                                : 8,
                                             height: currentPage == index
-                                            ? 10
-                                            : 8
+                                                ? 10
+                                                : 8
                                         )
                                 }
                             }
@@ -261,4 +261,16 @@ struct ContentView: View {
             )
         }
     }
+}
+
+#Preview {
+    ContentView()
+}
+
+#Preview("Loaded") {
+    let viewModel = InstaViewModel()
+
+    // Inject mock data if your ViewModel supports it
+
+    return ContentView()
 }

@@ -236,7 +236,7 @@ fun PostDetailsPreviewImage() {
             isDownloading = false,
             isDownloadAllLoading = false,
             downloadAll = {},
-            downloadFile = { file, type ->
+            downloadFile = { _, _ ->
 
             }
         )
@@ -261,7 +261,7 @@ fun PostDetailsPreviewView() {
             isDownloading = false,
             isDownloadAllLoading = false,
             downloadAll = {},
-            downloadFile = { file, type ->
+            downloadFile = { _, _ ->
 
             }
         )
