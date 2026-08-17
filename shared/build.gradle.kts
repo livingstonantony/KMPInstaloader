@@ -34,6 +34,12 @@ kotlin {
             target = "es2015"
         }
     }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        binaries.library()
+    }
     
     sourceSets {
 
@@ -64,6 +70,12 @@ kotlin {
         }
 
         val jsMain by getting {
+            dependencies {
+                implementation(libs.ktor.client.js)
+            }
+        }
+
+        val wasmJsMain by getting {
             dependencies {
                 implementation(libs.ktor.client.js)
             }

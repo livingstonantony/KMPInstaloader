@@ -39,7 +39,7 @@ class InstaRepository {
 
         println("=== InstaRepository DEBUG ===")
         println("Status : ${httpResponse.status}")
-        println("Raw Json : $rawJson")
+//        println("Raw Json : $rawJson")
         println("================================")
 
         if (!rawJson.trimStart().startsWith("{")) {
@@ -90,6 +90,10 @@ class InstaRepository {
                 }
             }
         }.awaitAll()
+    }
+
+    fun close() {
+        client.close()
     }
 
 }
