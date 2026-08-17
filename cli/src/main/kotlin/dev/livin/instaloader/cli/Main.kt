@@ -42,9 +42,9 @@ fun main(args: Array<String>) {
             // Download video if available
             post.video?.let { videoUrl ->
                 println("Downloading video...")
-                val bytes = repository.downloadFile(videoUrl)
-                val path = saveVideoToFile(bytes, fileNameBase)
-                println("Video saved to: $path")
+//                val bytes = repository.downloadFile(videoUrl)
+//                val path = saveVideoToFile(bytes, fileNameBase)
+//                println("Video saved to: $path")
             }
             
         } catch (e: Exception) {
