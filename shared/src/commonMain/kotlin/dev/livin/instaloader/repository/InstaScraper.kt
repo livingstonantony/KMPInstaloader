@@ -149,8 +149,8 @@ object InstaScraper {
         // 7. Extract image URLs
         // ---------------------------------------------------------
 
-        val imageUrls = extractImageUrls(item)
-//        val videoUrls = extractVideoUrls(item)
+        val imageUrls: List<String> = runCatching { extractImageUrls(item) }.getOrNull() ?: emptyList()
+        val videoUrls:String? = runCatching { extractVideoUrls(item) }.getOrNull()?.firstOrNull()
 
         println("\nURL =====\n")
 
@@ -164,11 +164,18 @@ object InstaScraper {
             }
         }
 
+        if (videoUrls.isNullOrEmpty()) {
+            println(
+                "No video URLs found"
+            )
+        } else {
+            println("Video URL: $videoUrls")
+        }
         return InstaPost(
             shortcode = shortcode,
             caption = "",
             images = imageUrls.filter { it.isNotEmpty() },
-            video = ""
+            video = videoUrls
         )
     }
 
