@@ -22,11 +22,13 @@ class InstaRepository {
 
     suspend fun getPost(url: String): InstaPost {
 
+        InstaScraper.downloadPost(url)
+
         val shortcode = url.getInstagramShortCode()?:""
-        val variables = """{"shortcode":"${shortcode}"}"""
+        val variables = """{"shortcode":"$shortcode"}"""
         val docId = "10015901848480474"
 
-        val httpResponse = client.get("https://www.instagram.com/graphql/query/") {
+        val httpResponse = client.get("https://www.instagram.com/graphql/query") {
             parameter("doc_id", docId)
             parameter("variables", variables)
             header("User-Agent", "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.3")

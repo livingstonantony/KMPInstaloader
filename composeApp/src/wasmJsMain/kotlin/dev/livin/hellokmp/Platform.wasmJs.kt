@@ -1,5 +1,7 @@
 package dev.livin.hellokmp
 
+import dev.livin.instaloader.Platform
+
 class WasmPlatform: Platform {
     override val name: String = "Web with Kotlin/Wasm"
 }

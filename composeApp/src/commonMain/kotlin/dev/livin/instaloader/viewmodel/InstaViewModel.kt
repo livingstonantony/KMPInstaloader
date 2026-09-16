@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.livin.instaloader.model.InstaPost
 import dev.livin.instaloader.repository.InstaRepository
+import dev.livin.instaloader.repository.InstaScraper
 import dev.livin.instaloader.utils.isValidInstagramUrl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,29 +44,11 @@ sealed class FileType {
 data class DownloadedFile(
     val data: ByteArray?,
     val type: FileType
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as DownloadedFile
-
-        if (!data.contentEquals(other.data)) return false
-        if (type != other.type) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = data?.contentHashCode() ?: 0
-        result = 31 * result + type.hashCode()
-        return result
-    }
-}
+)
 
 class InstaViewModel : ViewModel() {
 
-    private val repository = InstaRepository()
+    private val repository = InstaScraper
 
     private val _uiState = MutableStateFlow<InstaUiState<InstaPost>>(InstaUiState.Idle)
     val uiState: StateFlow<InstaUiState<InstaPost>> = _uiState.asStateFlow()
@@ -103,7 +86,7 @@ class InstaViewModel : ViewModel() {
             _getFilesByUrl.value = InstaUiState.Idle
 
             try {
-                val post = repository.getPost(shortcode.trim())
+                val post = repository.downloadPost(shortcode.trim())
                 println("Video URL: ${post.video}")
                 _uiState.value = InstaUiState.Success(post)
             } catch (e: Exception) {
