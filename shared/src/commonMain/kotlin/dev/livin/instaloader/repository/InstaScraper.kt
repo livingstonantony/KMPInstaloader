@@ -124,16 +124,11 @@ object InstaScraper {
         json: JsonObject
     ): JsonObject {
 
-        val data = json["data"]
-            ?.jsonObject
-            ?: throwMetadataError(json)
+        val data = json["data"]?.jsonObject ?: throwMetadataError(json)
 
-        val webInfo = data[
-            "xdt_api__v1__media__shortcode__web_info"
-        ]
+        val webInfo = data["xdt_api__v1__media__shortcode__web_info"]
             ?.jsonObject
-            ?: error(
-                "Instagram response does not contain " +
+            ?: error("Instagram response does not contain " +
                         "'xdt_api__v1__media__shortcode__web_info'"
             )
 
@@ -141,9 +136,7 @@ object InstaScraper {
             ?.asJsonArrayOrNull()
             ?.firstOrNull()
             ?.asJsonObjectOrNull()
-            ?: error(
-                "Instagram returned an empty media items array"
-            )
+            ?: error("Instagram returned an empty media items array")
     }
 
     // ---------------------------------------------------------
@@ -215,9 +208,7 @@ object InstaScraper {
 
             return carousel
                 .mapNotNull { media ->
-                    media
-                        .asJsonObjectOrNull()
-                        ?.let(::bestCandidate)
+                    media.asJsonObjectOrNull()?.let(::bestCandidate)
                 }
                 .distinct()
         }
@@ -281,37 +272,13 @@ object InstaScraper {
 
         return videos
             .mapNotNull { video ->
-
-                val obj = video
-                    .asJsonObjectOrNull()
-                    ?: return@mapNotNull null
-
-                val url = obj["url"]
-                    ?.asJsonPrimitiveOrNull()
-                    ?.contentOrNull
-
-                val width = obj["width"]
-                    ?.asJsonPrimitiveOrNull()
-                    ?.intOrNull
-                    ?: 0
-
-                val height = obj["height"]
-                    ?.asJsonPrimitiveOrNull()
-                    ?.intOrNull
-                    ?: 0
-
-                url?.let {
-                    Triple(
-                        it,
-                        width,
-                        height
-                    )
-                }
+                val obj = video.asJsonObjectOrNull() ?: return@mapNotNull null
+                val url = obj["url"]?.asJsonPrimitiveOrNull()?.contentOrNull
+                val width = obj["width"]?.asJsonPrimitiveOrNull()?.intOrNull ?: 0
+                val height = obj["height"]?.asJsonPrimitiveOrNull()?.intOrNull ?: 0
+                url?.let { Triple(it, width, height) }
             }
-            .maxByOrNull { (_, width, height) ->
-                width * height
-            }
-            ?.first
+            .maxByOrNull { (_, width, height) -> width * height }?.first
     }
 
     // ---------------------------------------------------------
@@ -330,31 +297,14 @@ object InstaScraper {
 
         return candidates
             .mapNotNull { candidate ->
-
-                val obj = candidate
-                    .asJsonObjectOrNull()
-                    ?: return@mapNotNull null
-
-                val url = obj["url"]
-                    ?.asJsonPrimitiveOrNull()
-                    ?.contentOrNull
-
-                val width = obj["width"]
-                    ?.asJsonPrimitiveOrNull()
-                    ?.intOrNull
-                    ?: 0
-
-                url?.let {
-                    Pair(
-                        it,
-                        width
-                    )
-                }
+                val obj = candidate.asJsonObjectOrNull() ?: return@mapNotNull null
+                val url = obj["url"]?.asJsonPrimitiveOrNull()?.contentOrNull
+                val width = obj["width"]?.asJsonPrimitiveOrNull()?.intOrNull ?: 0
+                url?.let { Pair(it, width) }
             }
             .maxByOrNull { (_, width) ->
                 width
-            }
-            ?.first
+            }?.first
     }
 
     // ---------------------------------------------------------
@@ -365,26 +315,10 @@ object InstaScraper {
 
         client.get(
             "https://www.instagram.com/"
-        ) {
-            header(
-                HttpHeaders.UserAgent,
-                USER_AGENT
-            )
-
-            header(
-                HttpHeaders.Accept,
-                "text/html,application/xhtml+xml"
-            )
-        }
-
-        return client.cookies(
-            "https://www.instagram.com/"
         )
-            .firstOrNull {
-                it.name == "csrftoken"
-            }
-            ?.value
-            .orEmpty()
+
+        return client.cookies("https://www.instagram.com/")
+            .firstOrNull { it.name == "csrftoken" }?.value.orEmpty()
     }
 
     // ---------------------------------------------------------
@@ -397,60 +331,22 @@ object InstaScraper {
     ): JsonObject {
 
         val variables = buildJsonObject {
-            put(
-                "shortcode",
-                shortcode
-            )
-
-            put(
-                "__relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider",
-                false
-            )
+            put("shortcode", shortcode)
+            put("__relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider", false)
         }.toString()
 
         val response = client.submitForm(
             url = "https://www.instagram.com/graphql/query/",
             formParameters = parameters {
-                append(
-                    "variables",
-                    variables
-                )
-
-                append(
-                    "doc_id",
-                    DOC_ID
-                )
-
-                append(
-                    "server_timestamps",
-                    "true"
-                )
+                append("variables", variables)
+                append("doc_id", DOC_ID)
+                append("server_timestamps", "true")
             }
         ) {
-            header(
-                HttpHeaders.UserAgent,
-                USER_AGENT
-            )
 
-            header(
-                HttpHeaders.Accept,
-                "*/*"
-            )
-
-            header(
-                "Referer",
-                "https://www.instagram.com/"
-            )
-
-            header(
-                "X-csrftoken",
-                csrf
-            )
-
-            header(
-                "X-Requested-With",
-                "XMLHttpRequest"
-            )
+            header("Referer", "https://www.instagram.com/")
+            header("X-csrftoken", csrf)
+            header("X-Requested-With", "XMLHttpRequest")
         }
 
         val text = response.bodyAsText()
@@ -460,16 +356,10 @@ object InstaScraper {
         }
 
         return try {
-
             Json.parseToJsonElement(text)
                 .jsonObject
-
         } catch (e: Exception) {
-
-            error(
-                "Unable to parse Instagram response as JSON: " +
-                        e.message
-            )
+            error("Unable to parse Instagram response as JSON: ${e.message}")
         }
     }
 
@@ -482,10 +372,7 @@ object InstaScraper {
     ): ByteArray {
 
         val response = client.get(url) {
-            header(
-                HttpHeaders.UserAgent,
-                USER_AGENT
-            )
+            header(HttpHeaders.UserAgent, USER_AGENT)
         }
 
         require(response.status.isSuccess()) {
@@ -504,7 +391,6 @@ object InstaScraper {
     ): List<ByteArray?> = coroutineScope {
 
         urls.map { url ->
-
             async {
                 try {
                     downloadFile(url)

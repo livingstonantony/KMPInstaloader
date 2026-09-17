@@ -28,11 +28,11 @@ actual fun createHttpClient(): HttpClient = HttpClient(OkHttp) {
 
 
     install(DefaultRequest) {
-        header(
-            HttpHeaders.UserAgent,
+        header(HttpHeaders.UserAgent,
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
         )
         header("X-IG-App-ID", "936619743392459")
+        header(HttpHeaders.Accept, "*/*")
     }
 
     install(Logging) {
