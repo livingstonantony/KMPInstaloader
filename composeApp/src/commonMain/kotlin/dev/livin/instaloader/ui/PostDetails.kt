@@ -124,10 +124,7 @@ fun PostDetails(
                                 )
 
                                 is FileType.Video -> post.video?.let {
-                                    downloadFile(
-                                        it,
-                                        FileType.Video
-                                    )
+                                    downloadFile(it, FileType.Video)
                                 }
                             }
 

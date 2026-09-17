@@ -3,7 +3,6 @@ package dev.livin.instaloader.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.livin.instaloader.model.InstaPost
-import dev.livin.instaloader.repository.InstaRepository
 import dev.livin.instaloader.repository.InstaScraper
 import dev.livin.instaloader.utils.isValidInstagramUrl
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,7 +85,7 @@ class InstaViewModel : ViewModel() {
             _getFilesByUrl.value = InstaUiState.Idle
 
             try {
-                val post = repository.downloadPost(shortcode.trim())
+                val post = repository.fetchPostData(shortcode.trim())
                 println("Video URL: ${post.video}")
                 _uiState.value = InstaUiState.Success(post)
             } catch (e: Exception) {

@@ -22,7 +22,7 @@ class InstaRepository {
 
     suspend fun getPost(url: String): InstaPost {
 
-        InstaScraper.downloadPost(url)
+        InstaScraper.fetchPostData(url)
 
         val shortcode = url.getInstagramShortCode()?:""
         val variables = """{"shortcode":"$shortcode"}"""

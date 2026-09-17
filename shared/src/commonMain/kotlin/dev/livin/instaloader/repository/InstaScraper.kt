@@ -9,7 +9,6 @@ import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
 import kotlinx.coroutines.async
@@ -22,6 +21,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -29,11 +29,6 @@ import kotlinx.serialization.json.put
 object InstaScraper {
 
     private const val DOC_ID = "27128499623469141"
-
-    private const val USER_AGENT =
-        "Mozilla/5.0 (X11; Linux x86_64) " +
-                "AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Chrome/142.0.0.0 Safari/537.36"
 
     private val client = createHttpClient()
 
@@ -47,7 +42,7 @@ object InstaScraper {
     // PUBLIC
     // ---------------------------------------------------------
 
-    suspend fun downloadPost(
+    suspend fun fetchPostData(
         shortcodeUrl: String
     ): InstaPost {
 
@@ -67,42 +62,23 @@ object InstaScraper {
         )
 
         val item = extractPostItem(json)
-
-        return createInstaPost(
-            shortcode = shortcode,
-            item = item
-        )
-    }
-
-    // ---------------------------------------------------------
-    // CREATE POST
-    // ---------------------------------------------------------
-
-    private fun createInstaPost(
-        shortcode: String,
-        item: JsonObject
-    ): InstaPost {
-
         val postType = getPostType(item)
 
-        val imageUrls: List<String>
-        val videoUrl: String?
+        var imageUrls: List<String> = emptyList()
+        var videoUrl: String? = null
 
         when (postType) {
-
             PostType.SINGLE_IMAGE -> {
-                imageUrls = extractImageUrls(item)
-                videoUrl = null
+                imageUrls = listOf(extractBestImageCandidateUrl(item) ?: "")
             }
 
             PostType.SINGLE_VIDEO -> {
-                imageUrls = emptyList()
                 videoUrl = extractVideoUrl(item)
             }
 
             PostType.ALBUM -> {
                 imageUrls = extractImageUrls(item)
-                videoUrl = extractVideoUrl(item)
+
             }
         }
 
@@ -116,6 +92,7 @@ object InstaScraper {
         )
     }
 
+
     // ---------------------------------------------------------
     // EXTRACT POST ITEM
     // ---------------------------------------------------------
@@ -128,7 +105,8 @@ object InstaScraper {
 
         val webInfo = data["xdt_api__v1__media__shortcode__web_info"]
             ?.jsonObject
-            ?: error("Instagram response does not contain " +
+            ?: error(
+                "Instagram response does not contain " +
                         "'xdt_api__v1__media__shortcode__web_info'"
             )
 
@@ -172,26 +150,15 @@ object InstaScraper {
     // POST TYPE
     // ---------------------------------------------------------
 
-    private fun getPostType(
-        item: JsonObject
-    ): PostType {
-
-        val carousel = item["carousel_media"]
-            ?.asJsonArrayOrNull()
-
-        if (!carousel.isNullOrEmpty()) {
-            return PostType.ALBUM
+    private fun getPostType(item: JsonObject): PostType {
+        return when (item["media_type"]?.jsonPrimitive?.intOrNull) {
+            1 -> PostType.SINGLE_IMAGE
+            2 -> PostType.SINGLE_VIDEO
+            8 -> PostType.ALBUM
+            else -> PostType.SINGLE_IMAGE
         }
-
-        val videos = item["video_versions"]
-            ?.asJsonArrayOrNull()
-
-        if (!videos.isNullOrEmpty()) {
-            return PostType.SINGLE_VIDEO
-        }
-
-        return PostType.SINGLE_IMAGE
     }
+
 
     // ---------------------------------------------------------
     // IMAGE URLS
@@ -218,6 +185,40 @@ object InstaScraper {
         ).distinct()
     }
 
+    private fun extractBestImageCandidateUrl(
+        item: JsonObject
+    ): String? {
+
+        return item["image_versions2"]
+            ?.jsonObject
+            ?.get("candidates")
+            ?.jsonArray
+            ?.mapNotNull { candidate ->
+
+                val obj = candidate.jsonObject
+
+                val url = obj["url"]
+                    ?.jsonPrimitive
+                    ?.contentOrNull
+                    ?: return@mapNotNull null
+
+                val width = obj["width"]
+                    ?.jsonPrimitive
+                    ?.intOrNull
+                    ?: 0
+
+                val height = obj["height"]
+                    ?.jsonPrimitive
+                    ?.intOrNull
+                    ?: 0
+
+                Triple(url, width, height)
+            }
+            ?.maxByOrNull { (_, width, height) ->
+                width * height
+            }
+            ?.first
+    }
     // ---------------------------------------------------------
     // VIDEO URL
     // ---------------------------------------------------------
@@ -230,7 +231,6 @@ object InstaScraper {
             ?.asJsonArrayOrNull()
 
         if (!videos.isNullOrEmpty()) {
-
             getBestVideo(videos)?.let {
                 return it
             }
@@ -240,7 +240,6 @@ object InstaScraper {
             ?.asJsonArrayOrNull()
 
         if (!carousel.isNullOrEmpty()) {
-
             carousel.forEach { mediaElement ->
 
                 val media = mediaElement
@@ -371,9 +370,7 @@ object InstaScraper {
         url: String
     ): ByteArray {
 
-        val response = client.get(url) {
-            header(HttpHeaders.UserAgent, USER_AGENT)
-        }
+        val response = client.get(url)
 
         require(response.status.isSuccess()) {
             "Failed to download file: ${response.status}"

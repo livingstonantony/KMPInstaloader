@@ -39,12 +39,15 @@ actual fun saveImageToFile(
     bytes: ByteArray,
     fileName: String
 ): String {
+    val extension = bytes.detectImageExtension()
+
     val file = File(
         getPicturesDirectory(),
-        "$fileName.jpg"
+        "$fileName.$extension"
     )
 
     file.writeBytes(bytes)
+
     return file.absolutePath
 }
 

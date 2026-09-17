@@ -15,6 +15,44 @@ fun String.getInstagramShortCode(): String? {
     }
 }
 
+fun ByteArray.detectImageExtension(): String {
+    val bytes = this
+    return when {
+        // JPEG: FF D8 FF
+        bytes.size >= 3 &&
+                bytes[0] == 0xFF.toByte() &&
+                bytes[1] == 0xD8.toByte() &&
+                bytes[2] == 0xFF.toByte() -> {
+            "jpg"
+        }
+
+        // PNG: 89 50 4E 47
+        bytes.size >= 4 &&
+                bytes[0] == 0x89.toByte() &&
+                bytes[1] == 0x50.toByte() &&
+                bytes[2] == 0x4E.toByte() &&
+                bytes[3] == 0x47.toByte() -> {
+            "png"
+        }
+
+        // WebP: RIFF....WEBP
+        bytes.size >= 12 &&
+                bytes[0] == 'R'.code.toByte() &&
+                bytes[1] == 'I'.code.toByte() &&
+                bytes[2] == 'F'.code.toByte() &&
+                bytes[3] == 'F'.code.toByte() &&
+                bytes[8] == 'W'.code.toByte() &&
+                bytes[9] == 'E'.code.toByte() &&
+                bytes[10] == 'B'.code.toByte() &&
+                bytes[11] == 'P'.code.toByte() -> {
+            "webp"
+        }
+
+        else -> "jpg"
+    }
+}
+
+
 
  fun isValidInstagramUrl(url: String): Boolean {
     val cleanUrl = url.trim().lowercase()

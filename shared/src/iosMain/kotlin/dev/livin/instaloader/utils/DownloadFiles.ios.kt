@@ -7,33 +7,28 @@ import platform.Foundation.*
 import platform.Foundation.*
 
 actual fun saveImageToFile(
-    bytes: ByteArray,
-    fileName: String
+    bytes: ByteArray, fileName: String
 ): String {
     val data = bytes.toNSData()
 
     val dir = NSSearchPathForDirectoriesInDomains(
-        NSDocumentDirectory,
-        NSUserDomainMask,
-        true
+        NSDocumentDirectory, NSUserDomainMask, true
     ).first() as String
 
-    val path = "$dir/$fileName.jpg"
+    val extension = bytes.detectImageExtension()
+    val path = "$dir/$fileName.$extension"
     NSFileManager.defaultManager.createFileAtPath(path, data, null)
 
     return path
 }
 
 actual fun saveVideoToFile(
-    bytes: ByteArray,
-    fileName: String
+    bytes: ByteArray, fileName: String
 ): String {
     val data = bytes.toNSData()
 
     val dir = NSSearchPathForDirectoriesInDomains(
-        NSDocumentDirectory,
-        NSUserDomainMask,
-        true
+        NSDocumentDirectory, NSUserDomainMask, true
     ).first() as String
 
     val path = "$dir/$fileName.mp4"

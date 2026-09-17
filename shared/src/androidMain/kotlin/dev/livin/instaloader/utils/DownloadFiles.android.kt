@@ -21,7 +21,10 @@ actual fun saveImageToFile(
     val resolver = appContext.contentResolver
 
     val contentValues = ContentValues().apply {
-        put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileName.jpg")
+        val extension = bytes.detectImageExtension()
+
+        put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileName.$extension")
+
         put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
         put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/InstaLoader")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
