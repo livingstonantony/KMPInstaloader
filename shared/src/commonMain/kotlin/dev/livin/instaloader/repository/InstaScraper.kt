@@ -3,33 +3,35 @@ package dev.livin.instaloader.repository
 import dev.livin.instaloader.model.InstaPost
 import dev.livin.instaloader.network.createHttpClient
 import dev.livin.instaloader.utils.getInstagramShortCode
+
 import io.ktor.client.call.body
 import io.ktor.client.plugins.cookies.cookies
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.statement.bodyAsText
+
 import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
+
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
 object InstaScraper {
 
-    /**
-     * Instagram's current document ID used for
-     * media shortcode web information.
-     */
     private const val DOC_ID = "27128499623469141"
 
     private const val USER_AGENT =
@@ -37,72 +39,72 @@ object InstaScraper {
                 "AppleWebKit/537.36 (KHTML, like Gecko) " +
                 "Chrome/142.0.0.0 Safari/537.36"
 
-    /**
-     * HttpCookies stores the csrftoken cookie received
-     * from Instagram and sends it with subsequent requests.
-     */
     private val client = createHttpClient()
 
-    /**
-     * Download media from a public Instagram post.
-     *
-     * Example:
-     *
-     * https://www.instagram.com/p/ABC123xyz/
-     */
-    suspend fun downloadPost(shortcodeUrl: String): InstaPost {
+    private enum class PostType {
+        SINGLE_IMAGE,
+        SINGLE_VIDEO,
+        ALBUM
+    }
 
-        // ---------------------------------------------------------
-        // 1. Extract shortcode
-        // ---------------------------------------------------------
+    // ---------------------------------------------------------
+    // PUBLIC
+    // ---------------------------------------------------------
+
+    suspend fun downloadPost(
+        shortcodeUrl: String
+    ): InstaPost {
 
         val shortcode = shortcodeUrl
             .getInstagramShortCode()
-            ?: error("Invalid Instagram URL: $shortcodeUrl")
+            ?: error(
+                "Invalid Instagram URL: $shortcodeUrl"
+            )
 
         println("SHORT_CODE: $shortcode")
 
-        // ---------------------------------------------------------
-        // 2. Get CSRF token
-        // ---------------------------------------------------------
+        // -----------------------------------------------------
+        // Get CSRF
+        // -----------------------------------------------------
 
         val csrf = fetchCsrfToken()
 
         println("CSRF: $csrf")
 
-        require(csrf.isNotBlank()) { "Instagram csrftoken was not found" }
+        require(csrf.isNotBlank()) {
+            "Instagram csrftoken was not found"
+        }
 
-        // ---------------------------------------------------------
-        // 3. Fetch Instagram metadata
-        // ---------------------------------------------------------
+        // -----------------------------------------------------
+        // Get metadata
+        // -----------------------------------------------------
 
         val json = fetchMetadata(
             shortcode = shortcode,
             csrf = csrf
         )
 
-        println(
-            "Meta data:\n$json"
-        )
+        println("Meta data:\n$json")
 
-        // ---------------------------------------------------------
-        // 4. Check GraphQL response
-        // ---------------------------------------------------------
+        // -----------------------------------------------------
+        // data
+        // -----------------------------------------------------
 
         val data = json["data"]
             ?.jsonObject
             ?: run {
 
                 val errorMessage = json["errors"]
-                    ?.jsonArray
+                    ?.asJsonArrayOrNull()
                     ?.firstOrNull()
                     ?.jsonObject
                     ?.get("message")
                     ?.jsonPrimitive
-                    ?.content
+                    ?.contentOrNull
 
                 error(
                     buildString {
+
                         append(
                             "Instagram returned no data."
                         )
@@ -120,9 +122,9 @@ object InstaScraper {
                 )
             }
 
-        // ---------------------------------------------------------
-        // 5. Extract media information
-        // ---------------------------------------------------------
+        // -----------------------------------------------------
+        // web info
+        // -----------------------------------------------------
 
         val webInfo = data[
             "xdt_api__v1__media__shortcode__web_info"
@@ -133,131 +135,521 @@ object InstaScraper {
                         "'xdt_api__v1__media__shortcode__web_info'"
             )
 
-        // ---------------------------------------------------------
-        // 6. Extract first media item
-        // ---------------------------------------------------------
+        // -----------------------------------------------------
+        // item
+        // -----------------------------------------------------
 
         val item = webInfo["items"]
-            ?.jsonArray
+            ?.asJsonArrayOrNull()
             ?.firstOrNull()
             ?.jsonObject
             ?: error(
                 "Instagram returned an empty media items array"
             )
 
-        // ---------------------------------------------------------
-        // 7. Extract image URLs
-        // ---------------------------------------------------------
+        // -----------------------------------------------------
+        // Detect post type
+        // -----------------------------------------------------
 
-        val imageUrls: List<String> = runCatching { extractImageUrls(item) }.getOrNull() ?: emptyList()
-        val videoUrls:String? = runCatching { extractVideoUrls(item) }.getOrNull()?.firstOrNull()
+        val postType = getPostType(item)
 
-        println("\nURL =====\n")
+        println("POST TYPE: $postType")
 
-        if (imageUrls.isEmpty()) {
-            println(
-                "No image URLs found"
-            )
-        } else {
-            imageUrls.forEachIndexed { index, url ->
-                println("${index + 1}. $url")
+        // -----------------------------------------------------
+        // Extract media
+        // -----------------------------------------------------
+
+        val imageUrls: List<String>
+        val videoUrl: String?
+
+        when (postType) {
+
+            PostType.SINGLE_IMAGE -> {
+
+                println(
+                    "Single image post"
+                )
+
+                imageUrls = extractImageUrls(item)
+
+                videoUrl = null
+            }
+
+            PostType.SINGLE_VIDEO -> {
+
+                println(
+                    "Single video / Reel"
+                )
+
+                imageUrls = emptyList()
+
+                videoUrl = extractVideoUrl(item)
+            }
+
+            PostType.ALBUM -> {
+
+                println(
+                    "Album / Carousel"
+                )
+
+                imageUrls = extractImageUrls(item)
+
+                videoUrl = extractVideoUrl(item)
             }
         }
 
-        if (videoUrls.isNullOrEmpty()) {
+        // -----------------------------------------------------
+        // Debug output
+        // -----------------------------------------------------
+
+        println()
+        println("URL =====")
+        println()
+
+        if (imageUrls.isEmpty()) {
+
+            println(
+                "No image URLs found"
+            )
+
+        } else {
+
+            println(
+                "Image URLs:"
+            )
+
+            imageUrls.forEachIndexed { index, url ->
+
+                println(
+                    "${index + 1}. $url"
+                )
+            }
+        }
+
+        if (videoUrl.isNullOrEmpty()) {
+
             println(
                 "No video URLs found"
             )
+
         } else {
-            println("Video URL: $videoUrls")
+
+            println(
+                "Video URL: $videoUrl"
+            )
         }
+
+        // -----------------------------------------------------
+        // Return result
+        // -----------------------------------------------------
+
         return InstaPost(
             shortcode = shortcode,
             caption = "",
-            images = imageUrls.filter { it.isNotEmpty() },
-            video = videoUrls
+            images = imageUrls.filter {
+                it.isNotEmpty()
+            },
+            video = videoUrl.orEmpty()
         )
     }
 
-    /**
-     * Step 1:
-     *
-     * Open Instagram homepage so Instagram can
-     * provide the csrftoken cookie.
-     */
+    // ---------------------------------------------------------
+    // POST TYPE
+    // ---------------------------------------------------------
+
+    private fun getPostType(
+        item: JsonObject
+    ): PostType {
+
+        // Instagram may return:
+        //
+        // "carousel_media": null
+        //
+        // or:
+        //
+        // "carousel_media": [...]
+        //
+        // We MUST safely handle both.
+
+        val carousel = item[
+            "carousel_media"
+        ]?.asJsonArrayOrNull()
+
+        if (!carousel.isNullOrEmpty()) {
+
+            return PostType.ALBUM
+        }
+
+        // Instagram may return:
+        //
+        // "video_versions": null
+        //
+        // or:
+        //
+        // "video_versions": [...]
+        //
+        // Again, handle both safely.
+
+        val videoVersions = item[
+            "video_versions"
+        ]?.asJsonArrayOrNull()
+
+        if (!videoVersions.isNullOrEmpty()) {
+
+            return PostType.SINGLE_VIDEO
+        }
+
+        return PostType.SINGLE_IMAGE
+    }
+
+    // ---------------------------------------------------------
+    // IMAGE URLS
+    // ---------------------------------------------------------
+
+    private fun extractImageUrls(
+        item: JsonObject
+    ): List<String> {
+
+        // -----------------------------------------------------
+        // Carousel
+        // -----------------------------------------------------
+
+        val carousel = item[
+            "carousel_media"
+        ]?.asJsonArrayOrNull()
+
+        if (!carousel.isNullOrEmpty()) {
+
+            return carousel
+                .mapNotNull { media ->
+
+                    bestCandidate(
+                        media.jsonObject
+                    )
+                }
+                .distinct()
+        }
+
+        // -----------------------------------------------------
+        // Single image
+        // -----------------------------------------------------
+
+        return listOfNotNull(
+            bestCandidate(item)
+        ).distinct()
+    }
+
+    // ---------------------------------------------------------
+    // VIDEO URL
+    // ---------------------------------------------------------
+
+    private fun extractVideoUrl(
+        item: JsonObject
+    ): String? {
+
+        // -----------------------------------------------------
+        // Single video / Reel
+        // -----------------------------------------------------
+
+        val videos = item[
+            "video_versions"
+        ]?.asJsonArrayOrNull()
+
+        if (!videos.isNullOrEmpty()) {
+
+            val bestVideo = getBestVideo(
+                videos
+            )
+
+            if (!bestVideo.isNullOrEmpty()) {
+
+                return bestVideo
+            }
+        }
+
+        // -----------------------------------------------------
+        // Carousel videos
+        // -----------------------------------------------------
+
+        val carousel = item[
+            "carousel_media"
+        ]?.asJsonArrayOrNull()
+
+        if (!carousel.isNullOrEmpty()) {
+
+            carousel.forEach { mediaElement ->
+
+                val media = mediaElement
+                    .jsonObject
+
+                val mediaVideos = media[
+                    "video_versions"
+                ]?.asJsonArrayOrNull()
+
+                if (!mediaVideos.isNullOrEmpty()) {
+
+                    val bestVideo = getBestVideo(
+                        mediaVideos
+                    )
+
+                    if (!bestVideo.isNullOrEmpty()) {
+
+                        return bestVideo
+                    }
+                }
+            }
+        }
+
+        return null
+    }
+
+    // ---------------------------------------------------------
+    // BEST VIDEO
+    // ---------------------------------------------------------
+
+    private fun getBestVideo(
+        videos: JsonArray
+    ): String? {
+
+        return videos
+            .mapNotNull { video ->
+
+                val obj = video.jsonObject
+
+                val url = obj[
+                    "url"
+                ]
+                    ?.jsonPrimitive
+                    ?.contentOrNull
+
+                val width = obj[
+                    "width"
+                ]
+                    ?.jsonPrimitive
+                    ?.intOrNull
+                    ?: 0
+
+                val height = obj[
+                    "height"
+                ]
+                    ?.jsonPrimitive
+                    ?.intOrNull
+                    ?: 0
+
+                if (url != null) {
+
+                    Triple(
+                        url,
+                        width,
+                        height
+                    )
+
+                } else {
+
+                    null
+                }
+            }
+            .maxByOrNull { (_, width, height) ->
+
+                width * height
+
+            }
+            ?.first
+    }
+
+    // ---------------------------------------------------------
+    // BEST IMAGE
+    // ---------------------------------------------------------
+
+    private fun bestCandidate(
+        media: JsonObject
+    ): String? {
+
+        val imageVersions = media[
+            "image_versions2"
+        ]?.jsonObject
+            ?: return null
+
+        val candidates = imageVersions[
+            "candidates"
+        ]?.asJsonArrayOrNull()
+            ?: return null
+
+        return candidates
+            .mapNotNull { candidate ->
+
+                val obj = candidate.jsonObject
+
+                val url = obj[
+                    "url"
+                ]
+                    ?.jsonPrimitive
+                    ?.contentOrNull
+
+                val width = obj[
+                    "width"
+                ]
+                    ?.jsonPrimitive
+                    ?.intOrNull
+                    ?: 0
+
+                if (url != null) {
+
+                    Pair(
+                        url,
+                        width
+                    )
+
+                } else {
+
+                    null
+                }
+            }
+            .maxByOrNull { (_, width) ->
+                width
+            }
+            ?.first
+    }
+
+    // ---------------------------------------------------------
+    // CSRF
+    // ---------------------------------------------------------
+
     private suspend fun fetchCsrfToken(): String {
 
         val response = client.get(
             "https://www.instagram.com/"
         ) {
-            header(HttpHeaders.UserAgent, USER_AGENT)
-            header(HttpHeaders.Accept, "text/html,application/xhtml+xml")
+
+            header(
+                HttpHeaders.UserAgent,
+                USER_AGENT
+            )
+
+            header(
+                HttpHeaders.Accept,
+                "text/html,application/xhtml+xml"
+            )
         }
 
-        println("Instagram homepage status: ${response.status}")
+        println(
+            "Instagram homepage status: " +
+                    response.status
+        )
 
-        val cookies = client.cookies("https://www.instagram.com/")
+        val cookies = client.cookies(
+            "https://www.instagram.com/"
+        )
 
-        val csrfToken = cookies
-            .firstOrNull { it.name == "csrftoken" }?.value.orEmpty()
-
-        return csrfToken
+        return cookies
+            .firstOrNull {
+                it.name == "csrftoken"
+            }
+            ?.value
+            .orEmpty()
     }
 
-    /**
-     * Step 2:
-     *
-     * Request Instagram GraphQL metadata.
-     */
+    // ---------------------------------------------------------
+    // METADATA
+    // ---------------------------------------------------------
+
     private suspend fun fetchMetadata(
         shortcode: String,
         csrf: String
     ): JsonObject {
 
         val variables = buildJsonObject {
-            put("shortcode", shortcode)
-            put("__relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider", false)
+
+            put(
+                "shortcode",
+                shortcode
+            )
+
+            put(
+                "__relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider",
+                false
+            )
+
         }.toString()
 
         val response = client.submitForm(
-            url = "https://www.instagram.com/graphql/query/",
+
+            url =
+                "https://www.instagram.com/graphql/query/",
+
             formParameters = parameters {
-                append("variables", variables)
-                append("doc_id", DOC_ID)
-                append("server_timestamps", "true")
+
+                append(
+                    "variables",
+                    variables
+                )
+
+                append(
+                    "doc_id",
+                    DOC_ID
+                )
+
+                append(
+                    "server_timestamps",
+                    "true"
+                )
             }
+
         ) {
-            header(HttpHeaders.UserAgent, USER_AGENT)
-            header(HttpHeaders.Accept, "*/*")
-            header("Referer", "https://www.instagram.com/")
-            header("X-csrftoken", csrf)
-            header("X-Requested-With", "XMLHttpRequest")
+
+            header(
+                HttpHeaders.UserAgent,
+                USER_AGENT
+            )
+
+            header(
+                HttpHeaders.Accept,
+                "*/*"
+            )
+
+            header(
+                "Referer",
+                "https://www.instagram.com/"
+            )
+
+            header(
+                "X-csrftoken",
+                csrf
+            )
+
+            header(
+                "X-Requested-With",
+                "XMLHttpRequest"
+            )
         }
 
         val text = response.bodyAsText()
 
-        println("GraphQL HTTP status: ${response.status}")
+        println(
+            "GraphQL HTTP status: " +
+                    response.status
+        )
 
-        println("Instagram GraphQL response:\n$text")
+        println(
+            "Instagram GraphQL response:\n$text"
+        )
 
-        // ---------------------------------------------------------
-        // HTTP-level error
-        // ---------------------------------------------------------
+        require(
+            response.status.isSuccess()
+        ) {
 
-        require(response.status.isSuccess()) {
             "Instagram HTTP error " +
                     "${response.status}: $text"
         }
 
-        // ---------------------------------------------------------
-        // JSON parsing
-        // ---------------------------------------------------------
-
         return try {
-            Json.parseToJsonElement(text)
-                .jsonObject
+
+            Json.parseToJsonElement(
+                text
+            ).jsonObject
 
         } catch (e: Exception) {
+
             error(
                 "Unable to parse Instagram response as JSON.\n" +
                         "Response: $text\n" +
@@ -266,137 +658,98 @@ object InstaScraper {
         }
     }
 
-    /**
-     * Extract image URLs from a media item.
-     *
-     * Supports:
-     *
-     * 1. Single image post
-     * 2. Carousel / album
-     */
-    private fun extractImageUrls(
-        item: JsonObject
-    ): List<String> {
-        // ---------------------------------------------------------
-        // Carousel / Album
-        // ---------------------------------------------------------
-        item["carousel_media"]
-            ?.jsonArray
-            ?.let { carousel ->
+    // ---------------------------------------------------------
+    // DOWNLOAD ONE FILE
+    // ---------------------------------------------------------
 
-                return carousel.mapNotNull { media ->
+    suspend fun downloadFile(
+        url: String
+    ): ByteArray {
 
-                    bestCandidate(
-                        media.jsonObject
-                    )
-                }
-            }
-        // ---------------------------------------------------------
-        // Single image
-        // ---------------------------------------------------------
-
-        return listOfNotNull(
-            bestCandidate(item)
-        )
-    }
-
-    private fun extractVideoUrls(item: JsonObject): List<String> {
-
-        // Single video / Reel
-        item["video_versions"]
-            ?.jsonArray
-            ?.let { videos ->
-                return videos
-                    .mapNotNull { video ->
-                        video.jsonObject["url"]
-                            ?.jsonPrimitive
-                            ?.content
-                    }
-            }
-
-        // Carousel containing videos
-        item["carousel_media"]
-            ?.jsonArray
-            ?.let { carousel ->
-
-                return carousel.flatMap { mediaElement ->
-
-                    val media = mediaElement.jsonObject
-
-                    media["video_versions"]
-                        ?.jsonArray
-                        ?.mapNotNull { video ->
-                            video.jsonObject["url"]
-                                ?.jsonPrimitive
-                                ?.content
-                        }
-                        ?: emptyList()
-                }
-            }
-
-        return emptyList()
-    }
-
-    /**
-     * Select the highest resolution image candidate.
-     *
-     * Instagram may return multiple candidates:
-     *
-     * - 150x150
-     * - 320x320
-     * - 640x640
-     * - 1080x1080
-     *
-     * We select the candidate with the largest width.
-     */
-    private fun bestCandidate(
-        media: JsonObject
-    ): String? {
-        return media["image_versions2"]
-            ?.jsonObject
-            ?.get("candidates")
-            ?.jsonArray
-            ?.maxByOrNull { candidate ->
-                candidate
-                    .jsonObject["width"]
-                    ?.jsonPrimitive
-                    ?.intOrNull
-                    ?: 0
-            }
-            ?.jsonObject
-            ?.get("url")
-            ?.jsonPrimitive
-            ?.content
-    }
-
-
-    suspend fun downloadFile(url: String): ByteArray {
         val response = client.get(url) {
-            // Optional: you can add headers if some CDNs require them
-            header("User-Agent", "Mozilla/5.0")
+
+            header(
+                "User-Agent",
+                USER_AGENT
+            )
         }
 
         if (response.status.value in 200..299) {
+
             return response.body<ByteArray>()
+
         } else {
-            throw Exception("Failed to download file: ${response.status}")
+
+            throw Exception(
+                "Failed to download file: " +
+                        response.status
+            )
         }
     }
 
-    suspend fun downloadFiles(urls: List<String>): List<ByteArray?> = coroutineScope {
+    // ---------------------------------------------------------
+    // DOWNLOAD MULTIPLE FILES
+    // ---------------------------------------------------------
+
+    suspend fun downloadFiles(
+        urls: List<String>
+    ): List<ByteArray?> = coroutineScope {
+
         urls.map { url ->
+
             async {
+
                 try {
+
                     downloadFile(url)
+
                 } catch (e: Exception) {
+
+                    e.printStackTrace()
+
                     null
                 }
             }
+
         }.awaitAll()
     }
 
+    // ---------------------------------------------------------
+    // CLOSE
+    // ---------------------------------------------------------
+
     fun close() {
+
         client.close()
     }
+}
 
+// =============================================================
+// JSON SAFE HELPERS
+// =============================================================
+//
+// This is the important part.
+//
+// Instagram can return:
+//
+// "carousel_media": null
+//
+// "carousel_media": [...]
+//
+// "video_versions": null
+//
+// "video_versions": [...]
+//
+// Calling .jsonArray directly on JsonNull causes:
+//
+// JsonNull is not a JsonArray
+//
+// These helpers safely return null when the JSON value
+// is not actually an array.
+// =============================================================
+
+private fun kotlinx.serialization.json.JsonElement
+        .asJsonArrayOrNull(): JsonArray? {
+
+    return this as? JsonArray
 }
