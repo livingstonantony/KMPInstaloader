@@ -69,16 +69,16 @@ object InstaScraper {
 
         when (postType) {
             PostType.SINGLE_IMAGE -> {
-                imageUrls = listOf(extractBestImageCandidateUrl(item) ?: "")
+                imageUrls = listOf(bestCandidate(item) ?: "")
             }
 
             PostType.SINGLE_VIDEO -> {
+                imageUrls = listOf(extractReelThumbnail(item) ?: "")
                 videoUrl = extractVideoUrl(item)
             }
 
             PostType.ALBUM -> {
                 imageUrls = extractImageUrls(item)
-
             }
         }
 
@@ -110,10 +110,7 @@ object InstaScraper {
                         "'xdt_api__v1__media__shortcode__web_info'"
             )
 
-        return webInfo["items"]
-            ?.asJsonArrayOrNull()
-            ?.firstOrNull()
-            ?.asJsonObjectOrNull()
+        return webInfo["items"]?.asJsonArrayOrNull()?.firstOrNull()?.asJsonObjectOrNull()
             ?: error("Instagram returned an empty media items array")
     }
 
@@ -185,39 +182,36 @@ object InstaScraper {
         ).distinct()
     }
 
-    private fun extractBestImageCandidateUrl(
+
+    private fun extractReelThumbnail(
         item: JsonObject
     ): String? {
 
-        return item["image_versions2"]
+        val candidates = item["image_versions2"]
             ?.jsonObject
             ?.get("candidates")
             ?.jsonArray
-            ?.mapNotNull { candidate ->
+            ?: return null
 
-                val obj = candidate.jsonObject
-
-                val url = obj["url"]
-                    ?.jsonPrimitive
-                    ?.contentOrNull
-                    ?: return@mapNotNull null
-
-                val width = obj["width"]
-                    ?.jsonPrimitive
-                    ?.intOrNull
-                    ?: 0
-
-                val height = obj["height"]
-                    ?.jsonPrimitive
-                    ?.intOrNull
-                    ?: 0
-
-                Triple(url, width, height)
+        return candidates
+            .mapNotNull { element ->
+                element as? JsonObject
             }
-            ?.maxByOrNull { (_, width, height) ->
+            .maxByOrNull { candidate ->
+
+                val width = candidate["width"]
+                    ?.jsonPrimitive
+                    ?.intOrNull ?: 0
+
+                val height = candidate["height"]
+                    ?.jsonPrimitive
+                    ?.intOrNull ?: 0
+
                 width * height
             }
-            ?.first
+            ?.get("url")
+            ?.jsonPrimitive
+            ?.contentOrNull
     }
     // ---------------------------------------------------------
     // VIDEO URL
@@ -288,11 +282,9 @@ object InstaScraper {
         media: JsonObject
     ): String? {
 
-        val candidates = media["image_versions2"]
-            ?.asJsonObjectOrNull()
-            ?.get("candidates")
-            ?.asJsonArrayOrNull()
-            ?: return null
+        val candidates =
+            media["image_versions2"]?.asJsonObjectOrNull()?.get("candidates")?.asJsonArrayOrNull()
+                ?: return null
 
         return candidates
             .mapNotNull { candidate ->

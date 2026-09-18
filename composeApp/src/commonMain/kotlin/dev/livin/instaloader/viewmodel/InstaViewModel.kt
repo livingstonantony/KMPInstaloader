@@ -90,7 +90,7 @@ class InstaViewModel : ViewModel() {
                 _uiState.value = InstaUiState.Success(post)
             } catch (e: Exception) {
                 println("Error fetching post: ${e.message}")
-                _uiState.value = InstaUiState.Error("Error fetching post: ${e.message}")
+                _uiState.value = InstaUiState.Error("Error fetching post: Please make sure it is public and the URL is valid.")
             }
         }
     }
