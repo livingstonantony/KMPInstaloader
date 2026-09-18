@@ -170,7 +170,7 @@ fun InstaLoaderScreen(
         OutlinedTextField(
             value = shortcode,
             onValueChange = { shortcode = it },
-            label = { Text("Enter Shortcode") },
+            label = { Text("Instagram post url") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(
@@ -207,7 +207,7 @@ fun InstaLoaderScreen(
 
         when (val state = uiState) {
             is InstaUiState.Idle -> {
-                Text("Enter a shortcode to see post details")
+                Text("Enter Instagram post url.")
             }
 
             is InstaUiState.Loading -> {

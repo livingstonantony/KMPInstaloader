@@ -29,6 +29,17 @@ kotlin {
         browser()
         binaries.executable()
     }
+
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+            export(projects.shared)
+        }
+    }
     
     sourceSets {
         androidMain.dependencies {
@@ -46,7 +57,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
-            implementation(projects.shared)
+            api(projects.shared)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
