@@ -22,7 +22,7 @@ Inspired by the Python [instaloader](https://github.com/instaloader/instaloader)
 
 ### Sample:
 
-<img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/demo_01.png" width="300"> 
+<img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/demo_01.png" width="650"> 
 
 
 ### Note ℹ️
