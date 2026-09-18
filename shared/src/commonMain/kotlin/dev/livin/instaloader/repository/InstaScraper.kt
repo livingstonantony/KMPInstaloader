@@ -38,10 +38,11 @@ object InstaScraper {
         ALBUM
     }
 
-    // ---------------------------------------------------------
-    // PUBLIC
-    // ---------------------------------------------------------
-
+    /**
+     * Extract media urls from the public Instagram post.
+     * @param shortcodeUrl The URL of the Instagram post.
+     * @return [InstaPost] containing the post details.
+     */
     suspend fun fetchPostData(
         shortcodeUrl: String
     ): InstaPost {
@@ -93,10 +94,10 @@ object InstaScraper {
     }
 
 
-    // ---------------------------------------------------------
-    // EXTRACT POST ITEM
-    // ---------------------------------------------------------
-
+    /**
+     * Extract the post item from the JSON response.
+     * @param json The JSON response.
+     */
     private fun extractPostItem(
         json: JsonObject
     ): JsonObject {
@@ -143,10 +144,12 @@ object InstaScraper {
         )
     }
 
-    // ---------------------------------------------------------
-    // POST TYPE
-    // ---------------------------------------------------------
 
+    /**
+     * Extract the post type from the JSON response.
+     * @param item The post meta data.
+     * @return [PostType] of the post.
+     */
     private fun getPostType(item: JsonObject): PostType {
         return when (item["media_type"]?.jsonPrimitive?.intOrNull) {
             1 -> PostType.SINGLE_IMAGE
@@ -156,11 +159,11 @@ object InstaScraper {
         }
     }
 
-
-    // ---------------------------------------------------------
-    // IMAGE URLS
-    // ---------------------------------------------------------
-
+    /**
+     * Extract best quality images url from the meta data json
+     * @param item The post meta data.
+     * @return List of image urls.
+     */
     private fun extractImageUrls(
         item: JsonObject
     ): List<String> {

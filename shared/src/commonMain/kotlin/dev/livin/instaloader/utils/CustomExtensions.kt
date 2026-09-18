@@ -2,6 +2,10 @@ package dev.livin.instaloader.utils
 
 import kotlin.math.roundToInt
 
+/**
+ * Extract shortcode from the Instagram URL.
+ * @param this The Instagram URL.
+ */
 fun String.getInstagramShortCode(): String? {
 
     // Regex to detect shortcode inside URL
