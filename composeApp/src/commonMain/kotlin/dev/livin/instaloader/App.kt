@@ -5,22 +5,27 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,7 +46,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.livin.instaloader.ui.InstaLoaderScreen
 import dev.livin.instaloader.ui.PostDetails
+import dev.livin.instaloader.ui.SettingsScreen
 import dev.livin.instaloader.utils.formatSize
 import dev.livin.instaloader.utils.getCurrentDateTimeString
 import dev.livin.instaloader.utils.saveImageToFile
@@ -55,275 +62,46 @@ import kmpinstaloader.composeapp.generated.resources.Res
 import kmpinstaloader.composeapp.generated.resources.download_2
 import org.jetbrains.compose.resources.painterResource
 
+enum class Screen {
+    Home, Settings
+}
+
 @Composable
 @Preview
 fun App(postUrl: String? = "") {
+    var currentScreen by remember { mutableStateOf(Screen.Home) }
+
     MaterialTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            InstaLoaderScreen(postUrl)
+        Scaffold(
+            bottomBar = {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = currentScreen == Screen.Home,
+                        onClick = { currentScreen = Screen.Home },
+                        icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                        label = { Text("Home") }
+                    )
+                    NavigationBarItem(
+                        selected = currentScreen == Screen.Settings,
+                        onClick = { currentScreen = Screen.Settings },
+                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                        label = { Text("Settings") }
+                    )
+                }
+            }
+        ) { innerPadding ->
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                when (currentScreen) {
+                    Screen.Home -> InstaLoaderScreen(postUrl)
+                    Screen.Settings -> SettingsScreen()
+                }
+            }
         }
     }
 }
 
-@Composable
-fun InstaLoaderScreen(
-    postUrl: String?,
-    viewModel: InstaViewModel = viewModel { InstaViewModel() }
-) {
-    var shortcode by remember { mutableStateOf(postUrl ?: "") }
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val fileState by viewModel.getFileByUrl.collectAsStateWithLifecycle()
-    val filesState by viewModel.getFilesByUrl.collectAsStateWithLifecycle()
-
-
-    LaunchedEffect(fileState) {
-        if (fileState is InstaUiState.Success) {
-
-            val file = (fileState as InstaUiState.Success<DownloadedFile>).post
-
-            val fileName = getCurrentDateTimeString()
-
-            file.data?.let { bytes ->
-
-                when (file.type) {
-                    FileType.Image -> {
-                        saveImageToFile(bytes, fileName)
-                    }
-
-                    FileType.Video -> {
-                        saveVideoToFile(bytes, fileName)
-                    }
-                }
-            }
-        }
-    }
-
-    LaunchedEffect(postUrl) {
-        // When user comes from shared link, user no need to click on download tail icon to fetch the post
-        postUrl?.let { url ->
-            viewModel.fetchPost(url)
-        }
-    }
-
-    // 🔥 Handle multiple images save (SIDE EFFECT)
-    LaunchedEffect(filesState) {
-        when(val state = filesState){
-            is InstaUiState.Success -> {
-                val files: List<DownloadedFile> = state.post
-                if (files.isNotEmpty()) {
-                    saveImagesToFiles(files.map { it.data })
-                }
-            }
-            else -> {}
-        }
-
-    }
-
-    // Apply safe drawing insets as content padding
-    // Helps avoid edge-to-edge UI issues like overlapping
-    // with status bar, navigation bar, notch, or gesture areas
-    // Especially to avoid UI issue in the desktop app
-    val density = LocalDensity.current
-    val layoutDirection = LocalLayoutDirection.current
-
-    val topInset = with(density) {
-        WindowInsets.safeDrawing.getTop(this).toDp()
-    }
-
-    val bottomInset = with(density) {
-        WindowInsets.safeDrawing.getBottom(this).toDp()
-    }
-
-    val startInset = with(density) {
-        WindowInsets.safeDrawing.getLeft(this, layoutDirection).toDp()
-    }
-
-    val endInset = with(density) {
-        WindowInsets.safeDrawing.getRight(this, layoutDirection).toDp()
-    }
-
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(
-                top = topInset,
-                bottom = bottomInset,
-                start = startInset,
-                end = endInset
-            )
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Insta Loader",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-
-        OutlinedTextField(
-            value = shortcode,
-            onValueChange = { shortcode = it },
-            label = { Text("Instagram post url") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    viewModel.fetchPost(shortcode)
-                }
-            ),
-            trailingIcon = {
-                Box(
-                    modifier = Modifier
-                        .padding(end = 4.dp)
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
-                        .clickable {
-                            viewModel.fetchPost(shortcode)
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.download_2),
-                        contentDescription = "Fetch",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-        )
-
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        when (val state = uiState) {
-            is InstaUiState.Idle -> {
-                Text("Enter Instagram post url.")
-            }
-
-            is InstaUiState.Loading -> {
-                CircularProgressIndicator()
-            }
-
-            is InstaUiState.Success -> {
-                PostDetails(
-                    state.post,
-                    isDownloading = fileState is InstaUiState.Loading,
-                    isDownloadAllLoading = filesState is InstaUiState.Loading,
-                    downloadAll = {
-                        viewModel.getFilesByUrl(it)
-                    },
-                    downloadFile = { file, type ->
-                        viewModel.getFileByUrl(file, type)
-                    }
-                )
-
-
-            }
-
-            is InstaUiState.Error -> {
-                Text(
-                    text = state.message,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-        }
-        when (val state = fileState) {
-            is InstaUiState.Idle -> {
-//                Text("Enter a shortcode to see post details")
-            }
-
-            is InstaUiState.Loading -> {
-                Text(
-                    "Downloading...",
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-            }
-
-            is InstaUiState.Success -> {
-                val file = state.post
-
-                when (file.type) {
-                    FileType.Image -> {
-                        val imageBytes = file.data
-
-                        if (imageBytes != null) {
-                            println("Download Image Size: ${imageBytes.formatSize()}")
-
-                            Text(
-                                "Image saved successfully at /Pictures/Instaloader",
-                                modifier = Modifier.padding(top = 16.dp)
-                            )
-                        } else {
-                            Text("No image found")
-                        }
-                    }
-
-                    FileType.Video -> {
-                        Text(
-                            "Video saved successfully at /Pictures/Instaloader",
-                            modifier = Modifier.padding(top = 16.dp)
-                        )
-                    }
-                }
-            }
-
-            is InstaUiState.Error -> {
-                Text(
-                    text = state.message,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-            }
-        }
-        when (val state = filesState) {
-
-            is InstaUiState.Idle -> {
-                // Do nothing
-            }
-
-            is InstaUiState.Loading -> {
-                Text(
-                    "Downloading all images...",
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-            }
-
-            is InstaUiState.Success -> {
-                val files = state.post
-
-                if (files.isNotEmpty()) {
-
-                    Text(
-                        "Saved ${files.size} files to /Pictures/Instaloader",
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
-
-                } else {
-                    Text(
-                        "No files found",
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
-                }
-            }
-
-            is InstaUiState.Error -> {
-                Text(
-                    text = state.message,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-            }
-        }
-
-    }
-}
