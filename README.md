@@ -22,10 +22,10 @@ Inspired by the Python [instaloader](https://github.com/instaloader/instaloader)
 
 ### Sample:
 
-<img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/demo_01_home_light.png" width="650"> 
-<img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/demo_01_settings_light.png" width="650"> 
-<img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/demo_02_home_dark.png" width="650"> 
-<img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/demo_02_settings_dark.png" width="650"> 
+<img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/demo_01_home_light.png" width="350">  <img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/demo_01_settings_light.png" width="350"> 
+
+<img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/demo_02_home_dark.png" width="350">   <img src="https://github.com/livingstonantony/KMPInstaloader/blob/master/doc/demo_02_settings_dark.png" width="350">
+ 
 
 
 ### Note ℹ️
