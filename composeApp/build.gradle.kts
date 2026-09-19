@@ -1,6 +1,7 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -117,3 +118,33 @@ compose.desktop {
         }
     }
 }
+
+// Generate BuildConfig.kt
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+
+val contactEmail = localProperties.getProperty("contact.email") ?: "livingstonantony70@gmail.com"
+val contactDiscord = localProperties.getProperty("contact.discord") ?: "https://discord.gg/2ebMfjnGn"
+val contactGithub = localProperties.getProperty("contact.github") ?: "https://github.com/livingstonantony/KMPInstaloader"
+val appVersion = "1.0.0"
+
+val buildConfigDir = file("src/commonMain/kotlin/dev/livin/instaloader")
+if (!buildConfigDir.exists()) {
+    buildConfigDir.mkdirs()
+}
+val buildConfigFile = file("${buildConfigDir.path}/BuildConfig.kt")
+buildConfigFile.writeText("""
+    package dev.livin.instaloader
+
+    object BuildConfig {
+        const val EMAIL = "$contactEmail"
+        const val DISCORD = "$contactDiscord"
+        const val GITHUB = "$contactGithub"
+        const val VERSION = "$appVersion"
+    }
+""".trimIndent())
+
+

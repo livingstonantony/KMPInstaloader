@@ -1,8 +1,5 @@
 package dev.livin.instaloader
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -61,6 +58,7 @@ import dev.livin.instaloader.viewmodel.InstaViewModel
 import kmpinstaloader.composeapp.generated.resources.Res
 import kmpinstaloader.composeapp.generated.resources.download_2
 import org.jetbrains.compose.resources.painterResource
+import dev.livin.instaloader.ui.InstaLoaderTheme
 
 enum class Screen {
     Home, Settings
@@ -71,7 +69,7 @@ enum class Screen {
 fun App(postUrl: String? = "") {
     var currentScreen by remember { mutableStateOf(Screen.Home) }
 
-    MaterialTheme {
+    InstaLoaderTheme {
         Scaffold(
             bottomBar = {
                 NavigationBar {
@@ -79,13 +77,13 @@ fun App(postUrl: String? = "") {
                         selected = currentScreen == Screen.Home,
                         onClick = { currentScreen = Screen.Home },
                         icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                        label = { Text("Home") }
+                        label = { Text("Home") },
                     )
                     NavigationBarItem(
                         selected = currentScreen == Screen.Settings,
                         onClick = { currentScreen = Screen.Settings },
                         icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                        label = { Text("Settings") }
+                        label = { Text("Settings") },
                     )
                 }
             }

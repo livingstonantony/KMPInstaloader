@@ -1,6 +1,6 @@
 # KMPInstaloader
 
-[![Discord](https://img.shields.io/badge/Discord-KMPInstaloader-5865F2?logo=discord&logoColor=white)](https://discord.gg/2ebMfjnGn) [![Android APK](https://img.shields.io/badge/Download-Android%20APK-3DDC84?logo=android&logoColor=white)](https://github.com/livingstonantony/KMPInstaloader/tree/master/doc/Android_KMP_Instaloader.apk)
+[![Discord](https://img.shields.io/badge/Discord-KMPInstaloader-5865F2?logo=discord&logoColor=white)](https://discord.com/channels/1491463417914069105/1491465908512751786) [![Android APK](https://img.shields.io/badge/Download-Android%20APK-3DDC84?logo=android&logoColor=white)](https://github.com/livingstonantony/KMPInstaloader/tree/master/doc/Android_KMP_Instaloader.apk)
 
 
 Kotlin Multiplatform Instagram media downloader for Android and Desktop.
