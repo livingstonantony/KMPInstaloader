@@ -52,7 +52,7 @@ Even small contributions are appreciated 💙
 
 Let’s build something useful for the Kotlin community together!
 
-Feel free to ⭐ the repo if you find it interesting!
+⭐ The repo if you find it interesting!
 
 **⚠️ Disclaimer:** This project is solely for educational purposes and to showcase Kotlin Multiplatform capabilities. The author is not responsible for any misuse of this tool. By using this software, you agree that you are doing so at your own risk and are responsible for complying with Instagram's Terms of Service and any applicable laws.
 ## License
