@@ -19,6 +19,13 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -93,7 +100,7 @@ fun SettingsScreen() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Palette, contentDescription = "Theme Icon")
+                        Icon(Icons.Outlined.Palette, contentDescription = "Theme Icon")
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text("Theme", fontWeight = FontWeight.Medium)
@@ -118,8 +125,10 @@ fun SettingsScreen() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Palette, contentDescription = "Dynamic Color Icon")
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Outlined.Palette, contentDescription = "Dynamic Color Icon")
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text("Dynamic color", fontWeight = FontWeight.Medium)
@@ -162,7 +171,7 @@ fun SettingsScreen() {
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Email, contentDescription = "Email Icon")
+                    Icon(Icons.Outlined.Email, contentDescription = "Email Icon")
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text("Email", fontWeight = FontWeight.Medium)
@@ -178,7 +187,7 @@ fun SettingsScreen() {
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Link, contentDescription = "Discord Icon")
+                    Icon(Icons.Outlined.Link, contentDescription = "Discord Icon")
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text("Discord", fontWeight = FontWeight.Medium)
@@ -194,7 +203,7 @@ fun SettingsScreen() {
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Star, contentDescription = "GitHub Icon")
+                    Icon(Icons.Outlined.StarOutline, contentDescription = "GitHub Icon")
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text("Star on GitHub", fontWeight = FontWeight.Medium)
@@ -229,7 +238,7 @@ fun SettingsScreen() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Info, contentDescription = "Version Icon")
+                        Icon(Icons.Outlined.Info, contentDescription = "Version Icon")
                         Spacer(modifier = Modifier.width(16.dp))
                         Text("App version", fontWeight = FontWeight.Medium)
                     }
@@ -248,11 +257,14 @@ fun SettingsScreen() {
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.BugReport, contentDescription = "Feedback Icon")
+                    Icon(Icons.Outlined.BugReport, contentDescription = "Feedback Icon")
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text("Feedback or Bug", fontWeight = FontWeight.Medium)
-                        Text("Open mail app to: Livingston Antony", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "Open mail app to: Livingston Antony",
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }

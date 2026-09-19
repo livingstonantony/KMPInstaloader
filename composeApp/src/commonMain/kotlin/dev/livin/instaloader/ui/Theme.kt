@@ -1,9 +1,8 @@
 package dev.livin.instaloader.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -18,10 +17,16 @@ enum class AppTheme {
 
 class ThemeSettings {
     var currentTheme by mutableStateOf(AppTheme.System)
-    var isDynamicColorEnabled by mutableStateOf(value = true)
+    var isDynamicColorEnabled by mutableStateOf(true)
 }
 
 val LocalThemeSettings = staticCompositionLocalOf { ThemeSettings() }
+
+@Composable
+expect fun getColorScheme(
+    darkTheme: Boolean,
+    dynamicColor: Boolean,
+): ColorScheme
 
 @Composable
 fun InstaLoaderTheme(
@@ -29,20 +34,18 @@ fun InstaLoaderTheme(
 ) {
     val themeSettings = remember { ThemeSettings() }
     
+    val darkTheme = when (themeSettings.currentTheme) {
+        AppTheme.Light -> false
+        AppTheme.Dark -> true
+        AppTheme.System -> isSystemInDarkTheme()
+    }
+    
+    val colorScheme = getColorScheme(
+        darkTheme = darkTheme,
+        dynamicColor = themeSettings.isDynamicColorEnabled,
+    )
+    
     CompositionLocalProvider(LocalThemeSettings provides themeSettings) {
-        val darkTheme = when (themeSettings.currentTheme) {
-            AppTheme.Light -> false
-            AppTheme.Dark -> true
-            AppTheme.System -> isSystemInDarkTheme()
-        }
-        
-        // Use default Material3 color schemes for now
-        val colorScheme = if (darkTheme) {
-            darkColorScheme()
-        } else {
-            lightColorScheme()
-        }
-        
         MaterialTheme(
             colorScheme = colorScheme,
             content = content,

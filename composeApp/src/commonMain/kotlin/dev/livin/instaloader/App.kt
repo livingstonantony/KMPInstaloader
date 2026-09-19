@@ -1,6 +1,5 @@
 package dev.livin.instaloader
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +15,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -76,13 +77,13 @@ fun App(postUrl: String? = "") {
                     NavigationBarItem(
                         selected = currentScreen == Screen.Home,
                         onClick = { currentScreen = Screen.Home },
-                        icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                        icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
                         label = { Text("Home") },
                     )
                     NavigationBarItem(
                         selected = currentScreen == Screen.Settings,
                         onClick = { currentScreen = Screen.Settings },
-                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                        icon = { Icon(Icons.Outlined.Settings, contentDescription = "Settings") },
                         label = { Text("Settings") },
                     )
                 }
