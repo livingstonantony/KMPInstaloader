@@ -13,18 +13,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Palette
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -49,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.livin.instaloader.BuildConfig
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen() {
@@ -67,13 +62,12 @@ fun SettingsScreen() {
         horizontalAlignment = Alignment.Start
     ) {
         Text(
-            text = "Settings",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 24.dp),
-            color = MaterialTheme.colorScheme.primary
-        )
-
+        text = "Settings",
+        fontSize = 28.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(bottom = 24.dp),
+        color = MaterialTheme.colorScheme.primary
+    )
         // Theme Section
         Text(
             text = "Appearance",
@@ -210,9 +204,27 @@ fun SettingsScreen() {
                         Text(BuildConfig.GITHUB, style = MaterialTheme.typography.bodySmall)
                     }
                 }
+                // Sponsor
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { uriHandler.openUri(BuildConfig.SPONSORS) }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Outlined.FavoriteBorder,
+                        contentDescription = "Sponsor Icon"
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text("Sponsor me", fontWeight = FontWeight.Medium)
+                        Text(BuildConfig.SPONSORS,style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
             }
         }
-
         // About Section
         Text(
             text = "About",
