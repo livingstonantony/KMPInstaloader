@@ -1,8 +1,6 @@
 package dev.livin.instaloader.cli
 
-import dev.livin.instaloader.repository.InstaRepository
-import dev.livin.instaloader.utils.saveImageToFile
-import dev.livin.instaloader.utils.saveVideoToFile
+import dev.livin.instaloader.repository.InstaScraper
 import dev.livin.instaloader.utils.getCurrentDateTimeString
 import kotlinx.coroutines.runBlocking
 
@@ -22,11 +20,11 @@ fun main(args: Array<String>) {
 
     println("Fetching post from: $url")
     
-    val repository = InstaRepository()
+    val repository = InstaScraper
     
     runBlocking {
         try {
-            val post = repository.getPost(url)
+            val post = repository.fetchPostData(url)
 //            println("Post found: ${post.caption.take(50)}...")
             
             val fileNameBase = getCurrentDateTimeString()

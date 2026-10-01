@@ -405,4 +405,8 @@ object InstaScraper {
 
     private fun JsonElement.asJsonPrimitiveOrNull() =
         this as? kotlinx.serialization.json.JsonPrimitive
+
+    fun close() {
+        client.close()
+    }
 }
