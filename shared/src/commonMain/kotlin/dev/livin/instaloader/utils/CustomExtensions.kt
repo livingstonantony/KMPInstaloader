@@ -6,16 +6,28 @@ import kotlin.math.roundToInt
  * Extract shortcode from the Instagram URL.
  * @param this The Instagram URL.
  */
+
+private val instagramUrlRegex = Regex(
+    """(?:https?://)?(?:www\.)?instagram\.com/(?:p|reel|reels|tv)/([^/?]+)""",
+    RegexOption.IGNORE_CASE
+)
+
+private val shortcodeRegex = Regex(
+    """^[A-Za-z0-9_-]{5,}$"""
+)
+
 fun String.getInstagramShortCode(): String? {
 
-    // Regex to detect shortcode inside URL
-    val regex = Regex("""instagram\.com/(?:p|reel|tv)/([^/?]+)""")
-    val match = regex.find(this)
+    val value = trim()
 
-    return when {
-        match != null -> match.groupValues[1]   // Extract from URL
-        this.matches(Regex("^[A-Za-z0-9_-]{5,}$")) -> this // Already a shortcode
-        else -> null
+    instagramUrlRegex
+        .find(value)
+        ?.groupValues
+        ?.getOrNull(1)
+        ?.let { return it }
+
+    return value.takeIf {
+        shortcodeRegex.matches(it)
     }
 }
 
