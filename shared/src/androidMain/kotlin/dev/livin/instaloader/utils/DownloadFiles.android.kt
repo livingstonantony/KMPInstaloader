@@ -71,7 +71,7 @@ actual fun saveVideoToFile(
     val contentValues = ContentValues().apply {
         put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileName.mp4")
         put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
-        put(MediaStore.MediaColumns.RELATIVE_PATH, "Movies/InstaLoader")
+        put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/InstaLoader")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             put(MediaStore.MediaColumns.IS_PENDING, 1)

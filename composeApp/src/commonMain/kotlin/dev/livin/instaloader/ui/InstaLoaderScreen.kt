@@ -235,7 +235,7 @@ fun InstaLoaderScreen(
 
                     FileType.Video -> {
                         Text(
-                            "Video saved successfully at /Movies/Instaloader",
+                            "Video saved successfully at /Pictures/Instaloader",
                             modifier = Modifier.padding(top = 16.dp)
                         )
                     }
