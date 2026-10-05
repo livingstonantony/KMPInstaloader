@@ -129,6 +129,7 @@ if (localPropertiesFile.exists()) {
 val contactEmail = localProperties.getProperty("contact.email") ?: "livingstonantony70@gmail.com"
 val contactDiscord = localProperties.getProperty("contact.discord") ?: "https://discord.gg/2ebMfjnGn"
 val contactGithub = localProperties.getProperty("contact.github") ?: "https://github.com/livingstonantony/KMPInstaloader"
+val sponsors = localProperties.getProperty("contact.sponsors") ?: "https://github.com/sponsors/livingstonantony"
 val appVersion = "1.0.0"
 
 val buildConfigDir = file("src/commonMain/kotlin/dev/livin/instaloader")
@@ -144,6 +145,7 @@ buildConfigFile.writeText("""
         const val DISCORD = "$contactDiscord"
         const val GITHUB = "$contactGithub"
         const val VERSION = "$appVersion"
+        const val SPONSORS = "$sponsors"
     }
 """.trimIndent())
 
