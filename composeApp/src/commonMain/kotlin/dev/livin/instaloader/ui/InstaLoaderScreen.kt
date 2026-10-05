@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -62,6 +63,7 @@ fun InstaLoaderScreen(
     val fileState by viewModel.getFileByUrl.collectAsStateWithLifecycle()
     val filesState by viewModel.getFilesByUrl.collectAsStateWithLifecycle()
 
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(fileState) {
         if (fileState is InstaUiState.Success) {
@@ -140,6 +142,7 @@ fun InstaLoaderScreen(
             ),
             keyboardActions = KeyboardActions(
                 onDone = {
+                    keyboardController?.hide()
                     viewModel.fetchPost(shortcode)
                 }
             ),
