@@ -112,7 +112,7 @@ fun SettingsScreen() {
                 }
 
                 // Dynamic Color Row
-                Row(
+/*                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
@@ -137,7 +137,7 @@ fun SettingsScreen() {
                         checked = themeSettings.isDynamicColorEnabled,
                         onCheckedChange = { themeSettings.isDynamicColorEnabled = it }
                     )
-                }
+                }*/
             }
         }
 
