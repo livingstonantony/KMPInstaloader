@@ -56,18 +56,16 @@ fun SettingsScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .safeDrawingPadding()
-            .verticalScroll(scrollState)
-            .padding(16.dp),
+            .verticalScroll(scrollState),
         horizontalAlignment = Alignment.Start
     ) {
         Text(
-        text = "Settings",
-        fontSize = 28.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom = 24.dp),
-        color = MaterialTheme.colorScheme.primary
-    )
+            text = "Settings",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 24.dp),
+            color = MaterialTheme.colorScheme.primary
+        )
         // Theme Section
         Text(
             text = "Appearance",
@@ -112,32 +110,32 @@ fun SettingsScreen() {
                 }
 
                 // Dynamic Color Row
-/*                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Outlined.Palette, contentDescription = "Dynamic Color Icon")
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            Text("Dynamic color", fontWeight = FontWeight.Medium)
-                            Text(
-                                text = "Use system dynamic colors if supported",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    Switch(
-                        checked = themeSettings.isDynamicColorEnabled,
-                        onCheckedChange = { themeSettings.isDynamicColorEnabled = it }
-                    )
-                }*/
+                /*                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(Icons.Outlined.Palette, contentDescription = "Dynamic Color Icon")
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        Column {
+                                            Text("Dynamic color", fontWeight = FontWeight.Medium)
+                                            Text(
+                                                text = "Use system dynamic colors if supported",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                    Switch(
+                                        checked = themeSettings.isDynamicColorEnabled,
+                                        onCheckedChange = { themeSettings.isDynamicColorEnabled = it }
+                                    )
+                                }*/
             }
         }
 
@@ -219,7 +217,7 @@ fun SettingsScreen() {
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text("Sponsor me", fontWeight = FontWeight.Medium)
-                        Text(BuildConfig.SPONSORS,style = MaterialTheme.typography.bodySmall)
+                        Text(BuildConfig.SPONSORS, style = MaterialTheme.typography.bodySmall)
                     }
                 }
 
