@@ -3,6 +3,8 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
+val appVersion = "1.3.1"
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
@@ -85,7 +87,7 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 4
-        versionName = "1.3.1"
+        versionName = appVersion
     }
 
     packaging {
@@ -115,7 +117,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "dev.livin.instaloader"
-            packageVersion = "1.0.0"
+            packageVersion = appVersion
         }
     }
 }
@@ -131,7 +133,6 @@ val contactEmail = localProperties.getProperty("contact.email") ?: "livingstonan
 val contactDiscord = localProperties.getProperty("contact.discord") ?: "https://discord.gg/2ebMfjnGn"
 val contactGithub = localProperties.getProperty("contact.github") ?: "https://github.com/livingstonantony/KMPInstaloader"
 val sponsors = localProperties.getProperty("contact.sponsors") ?: "https://github.com/sponsors/livingstonantony"
-val appVersion = "1.0.0"
 
 val buildConfigDir = file("src/commonMain/kotlin/dev/livin/instaloader")
 if (!buildConfigDir.exists()) {
