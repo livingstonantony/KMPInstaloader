@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
-val appVersion = "1.3.1"
+val appVersion = "1.5.0"
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -86,7 +86,7 @@ android {
         applicationId = "dev.livin.instaloader"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 4
+        versionCode = 5
         versionName = appVersion
     }
 
