@@ -25,28 +25,26 @@ fun main(args: Array<String>) {
     runBlocking {
         try {
             val post = repository.fetchPostData(url)
-//            println("Post found: ${post.caption.take(50)}...")
+            println("SUCCESS! Post shortcode: ${post.shortcode}")
+            println("Caption: ${post.caption}")
+            println("Images found (${post.images.size}): ${post.images}")
+            println("Video found: ${post.video}")
             
             val fileNameBase = getCurrentDateTimeString()
             
             // Download images
             post.images.forEachIndexed { index, imageUrl ->
-                println("Downloading image ${index + 1}...")
-//                val bytes = repository.downloadFile(imageUrl)
-//                val path = saveImageToFile(bytes, "${fileNameBase}_$index")
-//                println("Image saved to: $path")
+                println("Image ${index + 1} URL: $imageUrl")
             }
             
             // Download video if available
             post.video?.let { videoUrl ->
-                println("Downloading video...")
-//                val bytes = repository.downloadFile(videoUrl)
-//                val path = saveVideoToFile(bytes, fileNameBase)
-//                println("Video saved to: $path")
+                println("Video URL: $videoUrl")
             }
             
         } catch (e: Exception) {
             println("Error: ${e.message}")
+            e.printStackTrace()
         } finally {
             repository.close()
         }

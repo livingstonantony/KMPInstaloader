@@ -1,5 +1,6 @@
 package dev.livin.instaloader.repository
 
+import dev.livin.instaloader.model.InstaOEmbedResponse
 import dev.livin.instaloader.model.InstaPost
 import dev.livin.instaloader.network.createHttpClient
 import dev.livin.instaloader.utils.getInstagramShortCode
@@ -32,10 +33,8 @@ object InstaScraper {
 
     private val client = createHttpClient()
 
-    private enum class PostType {
-        SINGLE_IMAGE,
-        SINGLE_VIDEO,
-        ALBUM
+    private val jsonParser = Json {
+        ignoreUnknownKeys = true
     }
 
     /**
@@ -51,33 +50,103 @@ object InstaScraper {
             .getInstagramShortCode()
             ?: error("Invalid Instagram URL: $shortcodeUrl")
 
-        val csrf = fetchCsrfToken()
+        println("SHORTCODE: $shortcode")
 
-        require(csrf.isNotBlank()) {
-            "Instagram csrftoken was not found"
+        // 1. First attempt: GraphQL query (if CSRF/session works)
+        val csrf = runCatching { fetchCsrfToken() }.getOrDefault("")
+        if (csrf.isNotBlank()) {
+            val graphqlPost = runCatching {
+                val json = fetchMetadata(shortcode = shortcode, csrf = csrf)
+                val item = extractPostItem(json)
+                parseGraphQLItem(shortcode = shortcode, item = item)
+            }.getOrNull()
+
+            if (graphqlPost != null && (graphqlPost.images.isNotEmpty() || !graphqlPost.video.isNullOrBlank())) {
+                return graphqlPost
+            }
         }
 
-        val json = fetchMetadata(
+        // 2. Second attempt: OEmbed + Embed HTML Fallback (works for public posts without login)
+        return fetchPostDataViaEmbed(shortcode)
+    }
+
+    private suspend fun fetchPostDataViaEmbed(shortcode: String): InstaPost {
+        var caption = ""
+        val images = mutableListOf<String>()
+        var videoUrl: String? = null
+
+        // Fetch OEmbed response
+        val oembedUrl = "https://www.instagram.com/api/v1/oembed/?url=https://www.instagram.com/p/$shortcode/"
+        runCatching {
+            val response = client.get(oembedUrl) {
+                header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+            }
+            if (response.status.isSuccess()) {
+                val oembed = jsonParser.decodeFromString<InstaOEmbedResponse>(response.bodyAsText())
+                caption = oembed.title
+                if (oembed.thumbnailUrl.isNotBlank()) {
+                    images.add(oembed.thumbnailUrl)
+                }
+            }
+        }
+
+        // Fetch Embed HTML page for additional media / video URLs
+        val embedUrl = "https://www.instagram.com/p/$shortcode/embed/captioned/"
+        runCatching {
+            val response = client.get(embedUrl) {
+                header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+                header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            }
+            if (response.status.isSuccess()) {
+                val html = response.bodyAsText()
+                val unescaped = html.replace("\\/", "/")
+                    .replace("\\u0026", "&")
+                    .replace("&amp;", "&")
+                    .replace("&quot;", "\"")
+
+                // Extract video URL if present
+                val videoRegex = Regex("""(?:video_url|src)\s*[:=]\s*["'](https://[^"'\s]+\.mp4[^"'\s]*)["']""")
+                val foundVideo = videoRegex.find(unescaped)?.groupValues?.get(1)
+                if (!foundVideo.isNullOrBlank()) {
+                    videoUrl = foundVideo
+                }
+
+                // Extract display URLs / images
+                val displayUrlRegex = Regex(""""display_url"\s*:\s*"([^"]+)"""")
+                displayUrlRegex.findAll(unescaped).forEach { match ->
+                    val url = match.groupValues[1]
+                    if (url.isNotBlank() && !images.contains(url)) {
+                        images.add(url)
+                    }
+                }
+            }
+        }
+
+        require(images.isNotEmpty() || videoUrl != null) {
+            "Unable to extract media from Instagram post: $shortcode"
+        }
+
+        return InstaPost(
             shortcode = shortcode,
-            csrf = csrf
+            caption = caption,
+            images = images.distinct(),
+            video = videoUrl
         )
+    }
 
-        val item = extractPostItem(json)
+    private fun parseGraphQLItem(shortcode: String, item: JsonObject): InstaPost {
         val postType = getPostType(item)
-
         var imageUrls: List<String> = emptyList()
         var videoUrl: String? = null
 
         when (postType) {
             PostType.SINGLE_IMAGE -> {
-                imageUrls = listOf(bestCandidate(item) ?: "")
+                imageUrls = listOfNotNull(bestCandidate(item))
             }
-
             PostType.SINGLE_VIDEO -> {
-                imageUrls = listOf(extractReelThumbnail(item) ?: "")
+                imageUrls = listOfNotNull(extractReelThumbnail(item))
                 videoUrl = extractVideoUrl(item)
             }
-
             PostType.ALBUM -> {
                 imageUrls = extractImageUrls(item)
             }
@@ -86,13 +155,16 @@ object InstaScraper {
         return InstaPost(
             shortcode = shortcode,
             caption = "",
-            images = imageUrls.filter {
-                it.isNotEmpty()
-            },
-            video = videoUrl.orEmpty()
+            images = imageUrls.filter { it.isNotEmpty() },
+            video = videoUrl
         )
     }
 
+    private enum class PostType {
+        SINGLE_IMAGE,
+        SINGLE_VIDEO,
+        ALBUM
+    }
 
     /**
      * Extract the post item from the JSON response.
@@ -216,6 +288,7 @@ object InstaScraper {
             ?.jsonPrimitive
             ?.contentOrNull
     }
+
     // ---------------------------------------------------------
     // VIDEO URL
     // ---------------------------------------------------------
