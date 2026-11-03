@@ -46,16 +46,34 @@ fun PostDetails(
     post: dev.livin.instaloader.model.InstaPost,
     isDownloading: Boolean = false,
     isDownloadAllLoading: Boolean = false,
-    downloadAll: (List<String>) -> Unit,
+    downloadAll: (List<dev.livin.instaloader.model.InstaMediaItem>) -> Unit,
     downloadFile: (String, FileType) -> Unit
 ) {
 
-    val pagerState = rememberPagerState(pageCount = { post.images.size })
-    val fileType by remember {
-        mutableStateOf(
-            if (post.video?.isNotEmpty() == true) FileType.Video else FileType.Image
-        )
+    val mediaList = remember(post) {
+        if (post.mediaItems.isNotEmpty()) {
+            post.mediaItems
+        } else if (post.video?.isNotEmpty() == true) {
+            listOf(
+                dev.livin.instaloader.model.InstaMediaItem(
+                    url = post.video!!,
+                    isVideo = true,
+                    thumbnailUrl = post.images.firstOrNull()
+                )
+            )
+        } else {
+            post.images.map { url ->
+                dev.livin.instaloader.model.InstaMediaItem(
+                    url = url,
+                    isVideo = false,
+                    thumbnailUrl = url
+                )
+            }
+        }
     }
+
+    val pagerState = rememberPagerState(pageCount = { mediaList.size })
+    val currentMedia = mediaList.getOrNull(pagerState.currentPage)
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -70,8 +88,9 @@ fun PostDetails(
                 modifier = Modifier.fillMaxWidth()
             ) { page ->
 
+                val media = mediaList.getOrNull(page)
                 AsyncImage(
-                    model = post.images[page],
+                    model = media?.thumbnailUrl ?: media?.url,
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -116,18 +135,10 @@ fun PostDetails(
 
                     IconButton(
                         onClick = {
-
-                            when (fileType) {
-                                is FileType.Image -> downloadFile(
-                                    post.images[pagerState.currentPage],
-                                    FileType.Image
-                                )
-
-                                is FileType.Video -> post.video?.let {
-                                    downloadFile(it, FileType.Video)
-                                }
+                            currentMedia?.let { media ->
+                                val type = if (media.isVideo) FileType.Video else FileType.Image
+                                downloadFile(media.url, type)
                             }
-
                         },
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -150,7 +161,7 @@ fun PostDetails(
 
             }
 
-            if (post.video?.isNotEmpty() == true) {
+            if (currentMedia?.isVideo == true) {
                 IconButton(
                     onClick = {
                     },
@@ -175,13 +186,13 @@ fun PostDetails(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (fileType == FileType.Image){
+        if (mediaList.size > 1) {
             // 🔹 Dot indicator
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                repeat(post.images.size) { index ->
+                repeat(mediaList.size) { index ->
                     val isSelected = pagerState.currentPage == index
 
                     Box(
@@ -202,9 +213,9 @@ fun PostDetails(
         if (isDownloadAllLoading) {
             CircularProgressIndicator()
         } else {
-            if (fileType == FileType.Image) {
+            if (mediaList.isNotEmpty()) {
                 Button(onClick = {
-                    downloadAll(post.images)
+                    downloadAll(mediaList)
                 }) {
                     Text("Download All")
                 }

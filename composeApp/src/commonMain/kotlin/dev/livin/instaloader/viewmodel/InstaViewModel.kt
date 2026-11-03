@@ -2,6 +2,7 @@ package dev.livin.instaloader.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.livin.instaloader.model.InstaMediaItem
 import dev.livin.instaloader.model.InstaPost
 import dev.livin.instaloader.repository.InstaScraper
 import dev.livin.instaloader.utils.isValidInstagramUrl
@@ -113,6 +114,28 @@ class InstaViewModel : ViewModel() {
 
 
 
+    fun getMediaFiles(items: List<InstaMediaItem>) {
+        viewModelScope.launch {
+            _getFilesByUrl.value = InstaUiState.Loading
+            try {
+                val urls = items.map { it.url }
+                val files = repository.downloadFiles(urls)
+
+                val result = items.mapIndexed { index, item ->
+                    val file = files.getOrNull(index)
+                    val type = if (item.isVideo) FileType.Video else FileType.Image
+                    DownloadedFile(file, type)
+                }
+
+                _getFilesByUrl.value = InstaUiState.Success(result)
+
+            } catch (e: Exception) {
+                _getFilesByUrl.value =
+                    InstaUiState.Error(e.message ?: "Error fetching files")
+            }
+        }
+    }
+
     fun getFilesByUrl(urls: List<String>) {
         viewModelScope.launch {
             _getFilesByUrl.value = InstaUiState.Loading
@@ -123,10 +146,10 @@ class InstaViewModel : ViewModel() {
                     val file = files.getOrNull(index)
 
                     val type = when {
-                        url.contains(".mp4", ignoreCase = true) -> FileType.Video
-                        url.contains(".jpg", ignoreCase = true) ||
-                                url.contains(".jpeg", ignoreCase = true) ||
-                                url.contains(".png", ignoreCase = true) -> FileType.Image
+                        url.contains(".mp4", ignoreCase = true) ||
+                                url.contains("/o1/v/t16/", ignoreCase = true) ||
+                                url.contains("/v/t50/", ignoreCase = true) ||
+                                url.contains("video", ignoreCase = true) -> FileType.Video
                         else -> FileType.Image
                     }
 

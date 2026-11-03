@@ -1,6 +1,6 @@
-
 package dev.livin.instaloader.repository
 
+import dev.livin.instaloader.model.InstaMediaItem
 import dev.livin.instaloader.model.InstaPost
 import dev.livin.instaloader.network.createHttpClient
 import dev.livin.instaloader.utils.getInstagramShortCode
@@ -117,33 +117,38 @@ object InstaScraper {
         println("KMP_MEDIA_TYPE: $postType")
         val imageUrls: List<String>
         val videoUrl: String?
+        val mediaItems: List<InstaMediaItem>
 
         when (postType) {
 
             PostType.SINGLE_IMAGE -> {
 
-                imageUrls = listOfNotNull(
-                    bestCandidate(item)
-                )
-
+                val bestImg = bestCandidate(item).orEmpty()
+                imageUrls = if (bestImg.isNotEmpty()) listOf(bestImg) else emptyList()
                 videoUrl = null
+                mediaItems = if (bestImg.isNotEmpty()) {
+                    listOf(InstaMediaItem(url = bestImg, isVideo = false, thumbnailUrl = bestImg))
+                } else emptyList()
             }
 
             PostType.SINGLE_VIDEO -> {
 
-                imageUrls = listOfNotNull(
-                    extractReelThumbnail(item)
-                        ?: bestCandidate(item)
-                )
-
-                videoUrl = extractVideoUrl(item)
+                val thumb = extractReelThumbnail(item) ?: bestCandidate(item)
+                val vid = extractVideoUrl(item)
+                imageUrls = listOfNotNull(thumb)
+                videoUrl = vid
+                mediaItems = if (!vid.isNullOrBlank()) {
+                    listOf(InstaMediaItem(url = vid, isVideo = true, thumbnailUrl = thumb))
+                } else if (!thumb.isNullOrBlank()) {
+                    listOf(InstaMediaItem(url = thumb, isVideo = false, thumbnailUrl = thumb))
+                } else emptyList()
             }
 
             PostType.ALBUM -> {
 
-                imageUrls = extractImageUrls(item)
-
-                videoUrl = extractVideoUrl(item)
+                mediaItems = extractAlbumMediaItems(item)
+                imageUrls = mediaItems.mapNotNull { it.thumbnailUrl ?: it.url }
+                videoUrl = null
             }
         }
 
@@ -151,7 +156,8 @@ object InstaScraper {
             shortcode = shortcode,
             caption = "",
             images = imageUrls.distinct(),
-            video = videoUrl.orEmpty()
+            video = videoUrl.orEmpty(),
+            mediaItems = mediaItems
         )
     }
 
@@ -206,11 +212,8 @@ object InstaScraper {
 
         // Find JSON script tags.
         val scriptRegex = Regex(
-            """<script\b([^>]*)>(.*?)</script\s*>""",
-            setOf(
-                RegexOption.IGNORE_CASE,
-                RegexOption.DOT_MATCHES_ALL
-            )
+            """(?s)<script\b([^>]*)>(.*?)</script\s*>""",
+            RegexOption.IGNORE_CASE
         )
 
         val jsonScriptRegex = Regex(
@@ -469,12 +472,12 @@ object InstaScraper {
     }
 
     // ---------------------------------------------------------
-    // IMAGE URLS
+    // ALBUM MEDIA ITEMS
     // ---------------------------------------------------------
 
-    private fun extractImageUrls(
+    private fun extractAlbumMediaItems(
         item: JsonObject
-    ): List<String> {
+    ): List<InstaMediaItem> {
 
         // Current Instagram carousel structure.
         val carousel = item["carousel_media"]
@@ -483,8 +486,37 @@ object InstaScraper {
         if (!carousel.isNullOrEmpty()) {
 
             return carousel
-                .mapNotNull { media ->
-                    media.asJsonObjectOrNull()?.let(::bestCandidate)
+                .mapNotNull { mediaElement ->
+
+                    val media = mediaElement.asJsonObjectOrNull()
+                        ?: return@mapNotNull null
+
+                    val videoVersions = media["video_versions"]
+                        ?.asJsonArrayOrNull()
+
+                    val videoUrl = if (!videoVersions.isNullOrEmpty()) {
+                        getBestVideo(videoVersions)
+                    } else {
+                        media["video_url"]
+                            ?.asJsonPrimitiveOrNull()
+                            ?.contentOrNull
+                    }
+
+                    val thumbnailUrl = bestCandidate(media)
+
+                    if (!videoUrl.isNullOrBlank()) {
+                        InstaMediaItem(
+                            url = videoUrl,
+                            isVideo = true,
+                            thumbnailUrl = thumbnailUrl
+                        )
+                    } else if (!thumbnailUrl.isNullOrBlank()) {
+                        InstaMediaItem(
+                            url = thumbnailUrl,
+                            isVideo = false,
+                            thumbnailUrl = thumbnailUrl
+                        )
+                    } else null
                 }
                 .distinct()
         }
@@ -504,15 +536,48 @@ object InstaScraper {
                         .asJsonObjectOrNull()
                         ?.get("node")
                         ?.asJsonObjectOrNull()
+                        ?: return@mapNotNull null
 
-                    node?.let(::bestCandidate)
+                    val videoVersions = node["video_versions"]
+                        ?.asJsonArrayOrNull()
+
+                    val videoUrl = if (!videoVersions.isNullOrEmpty()) {
+                        getBestVideo(videoVersions)
+                    } else {
+                        node["video_url"]
+                            ?.asJsonPrimitiveOrNull()
+                            ?.contentOrNull
+                    }
+
+                    val thumbnailUrl = bestCandidate(node)
+
+                    if (!videoUrl.isNullOrBlank()) {
+                        InstaMediaItem(
+                            url = videoUrl,
+                            isVideo = true,
+                            thumbnailUrl = thumbnailUrl
+                        )
+                    } else if (!thumbnailUrl.isNullOrBlank()) {
+                        InstaMediaItem(
+                            url = thumbnailUrl,
+                            isVideo = false,
+                            thumbnailUrl = thumbnailUrl
+                        )
+                    } else null
                 }
                 .distinct()
         }
 
-        return listOfNotNull(
-            bestCandidate(item)
-        ).distinct()
+        val bestImg = bestCandidate(item)
+        return if (!bestImg.isNullOrBlank()) {
+            listOf(
+                InstaMediaItem(
+                    url = bestImg,
+                    isVideo = false,
+                    thumbnailUrl = bestImg
+                )
+            )
+        } else emptyList()
     }
 
     // ---------------------------------------------------------

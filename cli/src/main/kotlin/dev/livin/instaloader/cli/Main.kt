@@ -3,6 +3,7 @@ package dev.livin.instaloader.cli
 import dev.livin.instaloader.repository.InstaScraper
 import dev.livin.instaloader.utils.getCurrentDateTimeString
 import kotlinx.coroutines.runBlocking
+/*
 
 fun main(args: Array<String>) {
     if (args.isEmpty() || args.contains("--help") || args.contains("-h")) {
@@ -34,12 +35,12 @@ fun main(args: Array<String>) {
             
             // Download images
             post.images.forEachIndexed { index, imageUrl ->
-                println("Image ${index + 1} URL: $imageUrl")
+                println("KMP_MEDIA_Image ${index + 1} URL: $imageUrl")
             }
             
             // Download video if available
             post.video?.let { videoUrl ->
-                println("Video URL: $videoUrl")
+                println("KMP_MEDIA_Video URL: $videoUrl")
             }
             
         } catch (e: Exception) {
@@ -58,3 +59,4 @@ fun printHelp() {
     println("Options:")
     println("  -h, --help    Show this help message")
 }
+*/

@@ -15,6 +15,19 @@ expect fun saveVideoToFile(
 expect fun getCurrentDateTimeString(): String
 
 
+fun saveVideosToFile(files: List<ByteArray?>): List<String> {
+    val savedPaths = mutableListOf<String>()
+    val baseName = getCurrentDateTimeString() // SAME format, single call
+    files.forEachIndexed { index, bytes ->
+        if (bytes != null) {
+            val fileName = "${baseName}_${index + 1}"
+            val path = saveVideoToFile(bytes, fileName)
+            savedPaths.add(path)
+        }
+    }
+    return savedPaths
+}
+
 fun saveImagesToFiles(files: List<ByteArray?>): List<String> {
     val savedPaths = mutableListOf<String>()
     val baseName = getCurrentDateTimeString() // SAME format, single call
@@ -23,6 +36,27 @@ fun saveImagesToFiles(files: List<ByteArray?>): List<String> {
         if (bytes != null) {
             val fileName = "${baseName}_${index + 1}"
             val path = saveImageToFile(bytes, fileName)
+            savedPaths.add(path)
+        }
+    }
+
+    return savedPaths
+}
+
+fun saveTypedFiles(
+    files: List<Pair<ByteArray?, Boolean>>
+): List<String> {
+    val savedPaths = mutableListOf<String>()
+    val baseName = getCurrentDateTimeString()
+
+    files.forEachIndexed { index, (bytes, isVideo) ->
+        if (bytes != null) {
+            val fileName = "${baseName}_${index + 1}"
+            val path = if (isVideo) {
+                saveVideoToFile(bytes, fileName)
+            } else {
+                saveImageToFile(bytes, fileName)
+            }
             savedPaths.add(path)
         }
     }

@@ -43,6 +43,7 @@ import dev.livin.instaloader.utils.formatSize
 import dev.livin.instaloader.utils.getCurrentDateTimeString
 import dev.livin.instaloader.utils.saveImageToFile
 import dev.livin.instaloader.utils.saveImagesToFiles
+import dev.livin.instaloader.utils.saveTypedFiles
 import dev.livin.instaloader.utils.saveVideoToFile
 import dev.livin.instaloader.viewmodel.DownloadedFile
 import dev.livin.instaloader.viewmodel.FileType
@@ -94,13 +95,13 @@ fun InstaLoaderScreen(
         }
     }
 
-    // 🔥 Handle multiple images save (SIDE EFFECT)
+    // 🔥 Handle multiple files save (SIDE EFFECT)
     LaunchedEffect(filesState) {
         when(val state = filesState){
             is InstaUiState.Success -> {
                 val files: List<DownloadedFile> = state.post
                 if (files.isNotEmpty()) {
-                    saveImagesToFiles(files.map { it.data })
+                    saveTypedFiles(files.map { it.data to (it.type is FileType.Video) })
                 }
             }
             else -> {}
@@ -183,8 +184,8 @@ fun InstaLoaderScreen(
                     state.post,
                     isDownloading = fileState is InstaUiState.Loading,
                     isDownloadAllLoading = filesState is InstaUiState.Loading,
-                    downloadAll = {
-                        viewModel.getFilesByUrl(it)
+                    downloadAll = { mediaItems ->
+                        viewModel.getMediaFiles(mediaItems)
                     },
                     downloadFile = { file, type ->
                         viewModel.getFileByUrl(file, type)
