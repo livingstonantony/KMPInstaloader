@@ -147,7 +147,7 @@ object InstaScraper {
             PostType.ALBUM -> {
 
                 mediaItems = extractAlbumMediaItems(item)
-                imageUrls = mediaItems.mapNotNull { it.thumbnailUrl ?: it.url }
+                imageUrls = mediaItems.map { it.thumbnailUrl ?: it.url }
                 videoUrl = null
             }
         }
