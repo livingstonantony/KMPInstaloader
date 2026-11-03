@@ -730,22 +730,37 @@ object InstaScraper {
                 val url = obj["url"]
                     ?.asJsonPrimitiveOrNull()
                     ?.contentOrNull
+                    ?: obj["src"]
+                        ?.asJsonPrimitiveOrNull()
+                        ?.contentOrNull
 
                 val width = obj["width"]
                     ?.asJsonPrimitiveOrNull()
-                    ?.intOrNull ?: 0
+                    ?.intOrNull
+                    ?: obj["config_width"]
+                        ?.asJsonPrimitiveOrNull()
+                        ?.intOrNull ?: 0
 
                 val height = obj["height"]
                     ?.asJsonPrimitiveOrNull()
+                    ?.intOrNull
+                    ?: obj["config_height"]
+                        ?.asJsonPrimitiveOrNull()
+                        ?.intOrNull ?: 0
+
+                val bandwidth = obj["bandwidth"]
+                    ?.asJsonPrimitiveOrNull()
                     ?.intOrNull ?: 0
 
-                url?.let {
-                    Triple(it, width, height)
-                }
+                if (!url.isNullOrBlank()) {
+
+                    val score = (width * height).toLong() * 1000L + bandwidth
+
+                    url to score
+
+                } else null
             }
-            .maxByOrNull { (_, width, height) ->
-                width * height
-            }
+            .maxByOrNull { it.second }
             ?.first
     }
 
@@ -757,12 +772,13 @@ object InstaScraper {
         media: JsonObject
     ): String? {
 
+        // 1. image_versions2 candidates
         val candidates = media["image_versions2"]
             ?.asJsonObjectOrNull()
             ?.get("candidates")
             ?.asJsonArrayOrNull()
 
-        val bestImage = candidates
+        val bestCandidateUrl = candidates
             ?.mapNotNull { candidate ->
 
                 val obj = candidate.asJsonObjectOrNull()
@@ -776,17 +792,76 @@ object InstaScraper {
                     ?.asJsonPrimitiveOrNull()
                     ?.intOrNull ?: 0
 
-                url?.let {
-                    it to width
-                }
+                val height = obj["height"]
+                    ?.asJsonPrimitiveOrNull()
+                    ?.intOrNull ?: 0
+
+                if (!url.isNullOrBlank()) {
+                    Triple(url, width, height)
+                } else null
             }
-            ?.maxByOrNull { it.second }
+            ?.maxByOrNull { (_, width, height) ->
+                width * height
+            }
             ?.first
 
-        return bestImage
-            ?: media["display_url"]
-                ?.asJsonPrimitiveOrNull()
-                ?.contentOrNull
+        if (!bestCandidateUrl.isNullOrBlank()) {
+            return sanitizeImageUrl(bestCandidateUrl)
+        }
+
+        // 2. display_resources
+        val displayResources = media["display_resources"]
+            ?.asJsonArrayOrNull()
+
+        val bestResourceUrl = displayResources
+            ?.mapNotNull { resource ->
+
+                val obj = resource.asJsonObjectOrNull()
+                    ?: return@mapNotNull null
+
+                val url = obj["src"]
+                    ?.asJsonPrimitiveOrNull()
+                    ?.contentOrNull
+
+                val width = obj["config_width"]
+                    ?.asJsonPrimitiveOrNull()
+                    ?.intOrNull ?: 0
+
+                val height = obj["config_height"]
+                    ?.asJsonPrimitiveOrNull()
+                    ?.intOrNull ?: 0
+
+                if (!url.isNullOrBlank()) {
+                    Triple(url, width, height)
+                } else null
+            }
+            ?.maxByOrNull { (_, width, height) ->
+                width * height
+            }
+            ?.first
+
+        if (!bestResourceUrl.isNullOrBlank()) {
+            return sanitizeImageUrl(bestResourceUrl)
+        }
+
+        // 3. Fallback display_url
+        val displayUrl = media["display_url"]
+            ?.asJsonPrimitiveOrNull()
+            ?.contentOrNull
+
+        return displayUrl?.let { sanitizeImageUrl(it) }
+    }
+
+    private fun sanitizeImageUrl(
+        url: String
+    ): String {
+        return url
+            .replace("_p640x640", "")
+            .replace("p640x640_", "")
+            .replace("_p320x320", "")
+            .replace("_s640x640", "")
+            .replace("_p1080x1080", "")
+            .replace("stp=c288.0.864.864a_", "stp=")
     }
 
     // ---------------------------------------------------------
